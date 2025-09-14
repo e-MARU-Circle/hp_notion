@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import Image from 'next/image'; // Imageをインポート
 
 // 型定義
@@ -48,7 +48,7 @@ const MembersSection = ({ pages }: MembersSectionProps) => {
         staggerChildren: 0.1,
       },
     },
-  };
+  } as const satisfies Variants;
 
   // 各カード用のアニメーション定義 (ドロップイン)
   const cardVariants = {
@@ -62,7 +62,7 @@ const MembersSection = ({ pages }: MembersSectionProps) => {
         stiffness: 100,
       },
     },
-  };
+  } as const satisfies Variants;
 
   return (
     <section className="py-16 border-t border-stone-200" id="members">
