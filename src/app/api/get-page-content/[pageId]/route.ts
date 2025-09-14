@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
-  request: Request,
-  context: { params: { pageId: string } }
+  request: NextRequest,
+  context: { params: Promise<{ pageId: string }> }
 ) {
-  const pageId = context.params.pageId;
+  const { pageId } = await context.params;
   const apiKey = process.env.NOTION_API_KEY;
 
   if (!apiKey) {
