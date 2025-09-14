@@ -60,11 +60,11 @@ interface BlockType {
 // Notionブロックをレンダリングするコンポーネント
 const Block = ({ block }: { block: BlockType }) => {
   const { type } = block;
-  const value = block[type as keyof BlockType];
+  const value = block[type as Exclude<keyof BlockType, 'id' | 'type'>];
 
   // rich_textを持つブロックタイプかチェックする型ガード
   const hasRichText = (
-    v: BlockType[keyof BlockType]
+    v: BlockType[Exclude<keyof BlockType, 'id' | 'type'>]
   ): v is { rich_text: RichTextType[] } => {
     if (v && typeof v === 'object' && 'rich_text' in v) {
       return Array.isArray((v as { rich_text?: unknown }).rich_text);
@@ -109,7 +109,7 @@ const Block = ({ block }: { block: BlockType }) => {
 
   switch (type) {
     case 'image':
-      if ('type' in value) {
+      if (value && typeof value === 'object' && 'type' in value) {
         const src = value.type === 'external' ? value.external.url : value.file.url;
         const caption = value.caption.length > 0 ? value.caption[0].plain_text : '';
         return (
