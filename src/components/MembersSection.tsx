@@ -1,13 +1,24 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image'; // Imageをインポート
 
 // 型定義
+interface MultiSelectTag {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface PageProperties {
+  顔写真?: { files: { file: { url: string } }[] };
+  タイトル?: { title: { plain_text: string }[] };
+  担当者?: { multi_select: MultiSelectTag[] };
+}
+
 interface Page {
   id: string;
-  properties: {
-    [key: string]: any;
-  };
+  properties: PageProperties;
 }
 
 interface MembersSectionProps {
@@ -74,11 +85,11 @@ const MembersSection = ({ pages }: MembersSectionProps) => {
           return (
             <motion.div key={page.id} className="space-y-2" variants={cardVariants}>
               <div className="aspect-square rounded-full bg-gray-200 overflow-hidden relative">
-                {imageUrl && <img src={imageUrl} alt={name} className="w-full h-full object-cover" />}
+                {imageUrl && <Image src={imageUrl} alt={name} fill className="object-cover" />}
               </div>
               <p className="font-bold text-sm">{name}</p>
               <div className="flex flex-wrap justify-center gap-1 pt-1">
-                {tags.map((tag: any) => {
+                {tags.map((tag: MultiSelectTag) => {
                   const colorClass = tagColorMap[tag.color] || tagColorMap.default;
                   return (
                     <span key={tag.id} className={`text-xs px-2 py-0.5 rounded-full ${colorClass}`}>

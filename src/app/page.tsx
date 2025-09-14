@@ -2,16 +2,29 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image'; // Imageをインポート
 import HeroSection from "@/components/HeroSection";
 import MembersSection from "@/components/MembersSection";
 
 // 型定義
+interface MultiSelectTag {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface PageProperties {
+  タイトル?: { title: { plain_text: string }[] };
+  日本語タイトル?: { rich_text: { plain_text: string }[] };
+  キーワード?: { multi_select: MultiSelectTag[] };
+  担当者?: { multi_select: MultiSelectTag[] };
+  コンテンツタイプ?: { select: { name: string } };
+}
+
 interface Page {
   id: string;
   last_edited_time: string;
-  properties: {
-    [key: string]: any; // Notionのプロパティは動的なため、ここはanyを許容
-  };
+  properties: PageProperties;
 }
 
 interface RichTextType {
@@ -25,16 +38,36 @@ interface RichTextType {
   href: string | null;
 }
 
+// Blockの型。より具体的に定義
 interface BlockType {
   id: string;
   type: string;
-  [key: string]: any; // Blockの型は多様なため、ここはanyを許容
+  heading_1?: { rich_text: RichTextType[] };
+  heading_2?: { rich_text: RichTextType[] };
+  heading_3?: { rich_text: RichTextType[] };
+  paragraph?: { rich_text: RichTextType[] };
+  bulleted_list_item?: { rich_text: RichTextType[] };
+  image?: {
+    type: 'external' | 'file';
+    file: { url: string };
+    external: { url: string };
+    caption: { plain_text: string }[];
+  };
+  divider?: {};
 }
+
 
 // Notionブロックをレンダリングするコンポーネント
 const Block = ({ block }: { block: BlockType }) => {
-  const { type } = block; // 未使用のidを削除
-  const value = block[type];
+  const { type } = block;
+  const value = block[type as keyof BlockType];
+
+  // rich_textを持つブロックタイプかチェックする型ガード
+  const hasRichText = (
+    v: any
+  ): v is { rich_text: RichTextType[] } => {
+    return v && v.rich_text;
+  };
 
   // リッチテキスト（太字やリンクなど）を処理する関数
   const renderRichText = (richText: RichTextType[]) => {
@@ -52,31 +85,46 @@ const Block = ({ block }: { block: BlockType }) => {
     });
   };
 
+  if (!value) {
+    return <p className="text-xs text-gray-400">Unsupported block: {type}</p>;
+  }
+
+  if (hasRichText(value)) {
+    switch (type) {
+      case 'heading_1':
+        return <h1 className="text-3xl font-bold my-4">{renderRichText(value.rich_text)}</h1>;
+      case 'heading_2':
+        return <h2 className="text-2xl font-bold my-3">{renderRichText(value.rich_text)}</h2>;
+      case 'heading_3':
+        return <h3 className="text-xl font-bold my-2">{renderRichText(value.rich_text)}</h3>;
+      case 'paragraph':
+        return <p className="my-2 leading-relaxed">{renderRichText(value.rich_text)}</p>;
+      case 'bulleted_list_item':
+        return <li className="ml-6 list-disc">{renderRichText(value.rich_text)}</li>;
+    }
+  }
+
   switch (type) {
-    case 'heading_1':
-      return <h1 className="text-3xl font-bold my-4">{renderRichText(value.rich_text)}</h1>;
-    case 'heading_2':
-      return <h2 className="text-2xl font-bold my-3">{renderRichText(value.rich_text)}</h2>;
-    case 'heading_3':
-      return <h3 className="text-xl font-bold my-2">{renderRichText(value.rich_text)}</h3>;
-    case 'paragraph':
-      return <p className="my-2 leading-relaxed">{renderRichText(value.rich_text)}</p>;
-    case 'bulleted_list_item':
-      return <li className="ml-6 list-disc">{renderRichText(value.rich_text)}</li>;
     case 'image':
-      const src = value.type === 'external' ? value.external.url : value.file.url;
-      const caption = value.caption.length > 0 ? value.caption[0].plain_text : '';
-      return (
-        <figure className="my-4">
-          <img src={src} alt={caption || 'content image'} className="w-full h-auto rounded-md" />
-          {caption && <figcaption className="text-center text-sm text-gray-500 mt-2">{caption}</figcaption>}
-        </figure>
-      );
+      if ('type' in value) {
+        const src = value.type === 'external' ? value.external.url : value.file.url;
+        const caption = value.caption.length > 0 ? value.caption[0].plain_text : '';
+        return (
+          <figure className="my-4">
+            <div className="relative w-full h-auto aspect-video">
+              <Image src={src} alt={caption || 'content image'} fill className="object-contain rounded-md" />
+            </div>
+            {caption && <figcaption className="text-center text-sm text-gray-500 mt-2">{caption}</figcaption>}
+          </figure>
+        );
+      }
+      break;
     case 'divider':
       return <hr className="my-6" />;
     default:
       return <p className="text-xs text-gray-400">Unsupported block: {type}</p>;
   }
+  return null;
 };
 
 export default function Home() {
@@ -213,13 +261,13 @@ export default function Home() {
                             <div>
                               <p className="text-xs font-bold mb-1 text-stone-500">キーワード:</p>
                               <div className="flex flex-wrap gap-1">
-                                {keywords.map((tag: any) => <span key={tag.id} className={`text-xs px-1.5 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
+                                {keywords.map((tag: MultiSelectTag) => <span key={tag.id} className={`text-xs px-1.5 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
                               </div>
                             </div>
                             <div>
                               <p className="text-xs font-bold mb-1 text-stone-500">担当者:</p>
                               <div className="flex flex-wrap gap-1">
-                                {authors.map((tag: any) => <span key={tag.id} className={`text-xs px-1.5 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
+                                {authors.map((tag: MultiSelectTag) => <span key={tag.id} className={`text-xs px-1.5 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
                               </div>
                             </div>
                           </div>
@@ -276,6 +324,7 @@ export default function Home() {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
               {(() => {
+                if (!selectedPage) return null;
                 const originalTitle = selectedPage.properties.タイトル?.title[0]?.plain_text || "";
                 const japaneseTitle = selectedPage.properties.日本語タイトル?.rich_text[0]?.plain_text || "タイトルなし";
                 const keywords = selectedPage.properties.キーワード?.multi_select || [];
@@ -289,13 +338,13 @@ export default function Home() {
                       <div>
                         <p className="text-sm font-bold mb-1 text-stone-500">キーワード:</p>
                         <div className="flex flex-wrap gap-1">
-                          {keywords.map((tag: any) => <span key={tag.id} className={`text-sm px-2 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
+                          {keywords.map((tag: MultiSelectTag) => <span key={tag.id} className={`text-sm px-2 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
                         </div>
                       </div>
                       <div>
                         <p className="text-sm font-bold mb-1 text-stone-500">担当者:</p>
                         <div className="flex flex-wrap gap-1">
-                          {authors.map((tag: any) => <span key={tag.id} className={`text-sm px-2 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
+                          {authors.map((tag: MultiSelectTag) => <span key={tag.id} className={`text-sm px-2 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
                         </div>
                       </div>
                     </div>
