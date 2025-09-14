@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 
 const HeroSection = () => {
   const text = 'ABOJC';
@@ -15,7 +15,7 @@ const HeroSection = () => {
         delayChildren: 0.5, // 0.5秒待ってから開始
       },
     },
-  };
+  } as const satisfies Variants;
 
   // 各文字用のアニメーション定義 (ドロップイン)
   const letterVariants = {
@@ -29,7 +29,7 @@ const HeroSection = () => {
         stiffness: 100,
       },
     },
-  };
+  } as const satisfies Variants;
 
   return (
     <motion.section
