@@ -53,7 +53,7 @@ interface BlockType {
     external: { url: string };
     caption: { plain_text: string }[];
   };
-  divider?: {};
+  divider?: Record<string, never>;
 }
 
 
@@ -64,9 +64,12 @@ const Block = ({ block }: { block: BlockType }) => {
 
   // rich_textを持つブロックタイプかチェックする型ガード
   const hasRichText = (
-    v: any
+    v: BlockType[keyof BlockType]
   ): v is { rich_text: RichTextType[] } => {
-    return v && v.rich_text;
+    if (v && typeof v === 'object' && 'rich_text' in v) {
+      return Array.isArray((v as { rich_text?: unknown }).rich_text);
+    }
+    return false;
   };
 
   // リッチテキスト（太字やリンクなど）を処理する関数
