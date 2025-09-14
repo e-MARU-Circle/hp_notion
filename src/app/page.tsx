@@ -2,11 +2,33 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getPublishedPages } from "@/lib/notion";
 import HeroSection from "@/components/HeroSection";
 import MembersSection from "@/components/MembersSection";
 
 // 型定義
+interface RichText {
+  annotations: {
+    bold: boolean;
+    italic: boolean;
+    underline: boolean;
+    code: boolean;
+  };
+  plain_text: string;
+  href: string | null;
+}
+
+interface NotionBlock {
+  id: string;
+  type: string;
+  [key: string]: any;
+}
+
+interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface Page {
   id: string;
   last_edited_time: string;
@@ -16,12 +38,12 @@ interface Page {
 }
 
 // Notionブロックをレンダリングするコンポーネント
-const Block = ({ block }: { block: any }) => {
-  const { type, id } = block;
+const Block = ({ block }: { block: NotionBlock }) => {
+  const { type } = block;
   const value = block[type];
 
   // リッチテキスト（太字やリンクなど）を処理する関数
-  const renderRichText = (richText: any[]) => {
+  const renderRichText = (richText: RichText[]) => {
     return richText.map((text, index) => {
       const { annotations, plain_text, href } = text;
       let element: React.ReactNode = plain_text;
@@ -64,9 +86,9 @@ const Block = ({ block }: { block: any }) => {
 };
 
 export default function Home() {
-  const [groupedPages, setGroupedPages] = useState<any>({});
-  const [selectedPage, setSelectedPage] = useState<any>(null);
-  const [blocks, setBlocks] = useState<any[]>([]);
+  const [groupedPages, setGroupedPages] = useState<{ [key: string]: Page[] }>({});
+  const [selectedPage, setSelectedPage] = useState<Page | null>(null);
+  const [blocks, setBlocks] = useState<NotionBlock[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -75,7 +97,7 @@ export default function Home() {
         const res = await fetch('/api/get-pages');
         if (!res.ok) throw new Error('Failed to fetch pages');
         const pages = (await res.json()) as Page[];
-        const grouped = pages.reduce((acc: any, page: any) => {
+        const grouped = pages.reduce((acc: { [key: string]: Page[] }, page: Page) => {
           const contentType = page.properties.コンテンツタイプ?.select?.name || "その他";
           if (!acc[contentType]) acc[contentType] = [];
           acc[contentType].push(page);
@@ -161,7 +183,7 @@ export default function Home() {
           </div>
         </section>
 
-        {Object.entries(groupedPages).map(([contentType, pages]: [string, any[]]) => {
+        {Object.entries(groupedPages).map(([contentType, pages]: [string, Page[]]) => {
           if (contentType === "Group Members") {
             const sortedMembers = [...pages].sort((a, b) =>
               new Date(b.last_edited_time).getTime() - new Date(a.last_edited_time).getTime()
@@ -197,13 +219,13 @@ export default function Home() {
                             <div>
                               <p className="text-xs font-bold mb-1 text-stone-500">キーワード:</p>
                               <div className="flex flex-wrap gap-1">
-                                {keywords.map((tag: any) => <span key={tag.id} className={`text-xs px-1.5 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
+                                {keywords.map((tag: Tag) => <span key={tag.id} className={`text-xs px-1.5 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
                               </div>
                             </div>
                             <div>
                               <p className="text-xs font-bold mb-1 text-stone-500">担当者:</p>
                               <div className="flex flex-wrap gap-1">
-                                {authors.map((tag: any) => <span key={tag.id} className={`text-xs px-1.5 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
+                                {authors.map((tag: Tag) => <span key={tag.id} className={`text-xs px-1.5 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
                               </div>
                             </div>
                           </div>
@@ -273,13 +295,13 @@ export default function Home() {
                       <div>
                         <p className="text-sm font-bold mb-1 text-stone-500">キーワード:</p>
                         <div className="flex flex-wrap gap-1">
-                          {keywords.map((tag: any) => <span key={tag.id} className={`text-sm px-2 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
+                          {keywords.map((tag: Tag) => <span key={tag.id} className={`text-sm px-2 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
                         </div>
                       </div>
                       <div>
                         <p className="text-sm font-bold mb-1 text-stone-500">担当者:</p>
                         <div className="flex flex-wrap gap-1">
-                          {authors.map((tag: any) => <span key={tag.id} className={`text-sm px-2 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
+                          {authors.map((tag: Tag) => <span key={tag.id} className={`text-sm px-2 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
                         </div>
                       </div>
                     </div>
