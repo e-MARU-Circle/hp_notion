@@ -1,5 +1,7 @@
+import { fetchWithRetry } from './fetchWithRetry';
+
 /**
- * Notionデータベースから公開済みの記事一覧を取得する (fetch使用)
+ * Notionデータベースから公開済みの記事一覧を取得する (fetchWithRetry使用)
  */
 export const getPublishedPages = async () => {
   const databaseId = process.env.NOTION_DATABASE_ID;
@@ -9,7 +11,7 @@ export const getPublishedPages = async () => {
     throw new Error('NotionのAPIキーまたはデータベースIDが設定されていません。');
   }
 
-  const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+  const response = await fetchWithRetry(`https://api.notion.com/v1/databases/${databaseId}/query`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,

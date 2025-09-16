@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { fetchWithRetry } from '@/lib/fetchWithRetry';
 
 export async function GET(
   request: NextRequest,
@@ -15,7 +16,7 @@ export async function GET(
   }
 
   try {
-    const response = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children`,
+    const response = await fetchWithRetry(`https://api.notion.com/v1/blocks/${pageId}/children`,
       {
         method: 'GET',
         headers: {
