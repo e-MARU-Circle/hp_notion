@@ -250,8 +250,42 @@ export default function Home() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {pages.map((page) => {
-                    const originalTitle = page.properties.タイトル?.title[0]?.plain_text || "";
-                    const japaneseTitle = page.properties.日本語タイトル?.rich_text[0]?.plain_text || "タイトルなし";
+                    // 柔軟なタイトル抽出（Notionの title/rich_text 型を優先）
+                    type TitleProperty = { title: { plain_text: string }[] };
+                    type RichTextProperty = { rich_text: { plain_text: string }[] };
+                    const isTitleProperty = (v: unknown): v is TitleProperty =>
+                      !!v && typeof v === 'object' && Array.isArray((v as TitleProperty).title) &&
+                      typeof (v as TitleProperty).title[0]?.plain_text === 'string';
+                    const isRichTextProperty = (v: unknown): v is RichTextProperty =>
+                      !!v && typeof v === 'object' && Array.isArray((v as RichTextProperty).rich_text) &&
+                      typeof (v as RichTextProperty).rich_text[0]?.plain_text === 'string';
+
+                    const extractTitle = (props: PageProperties): string => {
+                      const rec = props as unknown as Record<string, unknown>;
+                      // 既知キーを優先
+                      const knownKeys = ["タイトル", "Title", "原著タイトル", "英語タイトル"] as const;
+                      for (const k of knownKeys) {
+                        const v = rec[k];
+                        if (isTitleProperty(v)) return v.title[0]?.plain_text ?? '';
+                      }
+                      // 任意の title 型をフォールバック
+                      for (const v of Object.values(rec)) {
+                        if (isTitleProperty(v)) return v.title[0]?.plain_text ?? '';
+                      }
+                      return "";
+                    };
+                    const extractJpTitle = (props: PageProperties): string | null => {
+                      const rec = props as unknown as Record<string, unknown>;
+                      const candidates = ["日本語タイトル", "Japanese Title", "和訳タイトル", "和題"] as const;
+                      for (const k of candidates) {
+                        const v = rec[k];
+                        if (isRichTextProperty(v)) return v.rich_text[0]?.plain_text ?? null;
+                      }
+                      return null;
+                    };
+
+                    const originalTitle = extractTitle(page.properties);
+                    const japaneseTitle = extractJpTitle(page.properties) || "タイトルなし";
                     const keywords = page.properties.キーワード?.multi_select || [];
                     const authors = page.properties.担当者?.multi_select || [];
 
@@ -262,22 +296,38 @@ export default function Home() {
                         onClick={() => setSelectedPage(page)}
                         whileHover={{ y: -5 }}
                       >
-                        <div className="aspect-video bg-gray-200 flex items-center justify-center p-4">
-                          <h4 className="font-semibold text-center text-gray-600">{originalTitle}</h4>
+                        <div className="aspect-video bg-gray-200 flex items-center justify-center p-4 overflow-hidden">
+                          <h4 className="font-semibold text-center text-gray-600 break-words">
+                            {originalTitle}
+                          </h4>
                         </div>
                         <div className="p-4 flex flex-col flex-grow">
                           <h3 className="font-bold mb-2 flex-grow">{japaneseTitle}</h3>
                           <div className="mt-auto space-y-2">
                             <div>
                               <p className="text-xs font-bold mb-1 text-stone-500">キーワード:</p>
-                              <div className="flex flex-wrap gap-1">
-                                {keywords.map((tag: MultiSelectTag) => <span key={tag.id} className={`text-xs px-1.5 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
+                              <div className="w-full max-w-full flex flex-wrap gap-1">
+                                {keywords.map((tag: MultiSelectTag) => (
+                                  <span
+                                    key={tag.id}
+                                    className={`text-xs px-1.5 py-0.5 rounded-full break-words ${tagColorMap[tag.color]}`}
+                                  >
+                                    {tag.name}
+                                  </span>
+                                ))}
                               </div>
                             </div>
                             <div>
                               <p className="text-xs font-bold mb-1 text-stone-500">担当者:</p>
-                              <div className="flex flex-wrap gap-1">
-                                {authors.map((tag: MultiSelectTag) => <span key={tag.id} className={`text-xs px-1.5 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
+                              <div className="w-full max-w-full flex flex-wrap gap-1">
+                                {authors.map((tag: MultiSelectTag) => (
+                                  <span
+                                    key={tag.id}
+                                    className={`text-xs px-1.5 py-0.5 rounded-full break-words ${tagColorMap[tag.color]}`}
+                                  >
+                                    {tag.name}
+                                  </span>
+                                ))}
                               </div>
                             </div>
                           </div>
