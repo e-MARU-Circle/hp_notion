@@ -39,6 +39,22 @@ const tagColorMap: { [key: string]: string } = {
 };
 
 const MembersSection = ({ pages }: MembersSectionProps) => {
+  const getPageTitle = (props: any): string | null => {
+    if (!props || typeof props !== 'object') return null;
+    const candidateKeys = ['名前', 'Name', 'タイトル', '氏名', 'メンバー名'];
+    for (const key of candidateKeys) {
+      const v = props[key as keyof typeof props] as any;
+      if (v && Array.isArray(v.title) && v.title[0]?.plain_text) {
+        return v.title[0].plain_text as string;
+      }
+    }
+    for (const v of Object.values(props)) {
+      if (v && typeof v === 'object' && 'title' in v && Array.isArray((v as any).title) && (v as any).title[0]?.plain_text) {
+        return (v as any).title[0].plain_text as string;
+      }
+    }
+    return null;
+  };
   // 親コンテナ用のアニメーション定義
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -78,8 +94,12 @@ const MembersSection = ({ pages }: MembersSectionProps) => {
         viewport={{ once: true, amount: 0.2 }} // アニメーションは1回だけ、20%見えたら開始
       >
         {pages.map((page) => {
-          const imageUrl = page.properties.顔写真?.files[0]?.file?.url || null;
-          const name = page.properties.タイトル?.title[0]?.plain_text || '名前なし';
+          const imageUrl =
+            // Notion file can be external or file
+            (page.properties.顔写真?.files?.[0] as any)?.external?.url ||
+            (page.properties.顔写真?.files?.[0] as any)?.file?.url ||
+            null;
+          const name = getPageTitle(page.properties as any) || '名前なし';
           const tags = page.properties.担当者?.multi_select || [];
 
           return (

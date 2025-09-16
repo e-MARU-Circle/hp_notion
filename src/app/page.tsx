@@ -229,7 +229,8 @@ export default function Home() {
         </section>
 
         {Object.entries(groupedPages).map(([contentType, pages]) => {
-          if (contentType === "Group Members") {
+          const isMembers = /member/i.test(contentType) || contentType.includes("メンバー");
+          if (isMembers) {
             const sortedMembers = [...pages].sort((a, b) =>
               new Date(b.last_edited_time).getTime() - new Date(a.last_edited_time).getTime()
             );
