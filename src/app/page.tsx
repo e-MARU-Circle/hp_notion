@@ -75,17 +75,6 @@ interface BlockType {
 // Notionブロックをレンダリングするコンポーネント
 const Block = ({ block }: { block: BlockType }) => {
   const { type } = block;
-  const value = block[type as Exclude<keyof BlockType, 'id' | 'type'>];
-
-  // rich_textを持つブロックタイプかチェックする型ガード
-  const hasRichText = (
-    v: BlockType[Exclude<keyof BlockType, 'id' | 'type'>]
-  ): v is { rich_text: RichTextType[] } => {
-    if (v && typeof v === 'object' && 'rich_text' in v) {
-      return Array.isArray((v as { rich_text?: unknown }).rich_text);
-    }
-    return false;
-  };
 
   // リッチテキスト（太字やリンクなど）を処理する関数
   const renderRichText = (richText: RichTextType[]) => {
@@ -103,100 +92,91 @@ const Block = ({ block }: { block: BlockType }) => {
     });
   };
 
-  if (!value) {
-    return <p className="text-xs text-gray-400">Unsupported block: {type}</p>;
-  }
-
-  if (hasRichText(value)) {
-    switch (type) {
-      case 'heading_1':
-        return <h1 className="text-3xl font-bold my-4">{renderRichText(value.rich_text)}</h1>;
-      case 'heading_2':
-        return <h2 className="text-2xl font-bold my-3">{renderRichText(value.rich_text)}</h2>;
-      case 'heading_3':
-        return <h3 className="text-xl font-bold my-2">{renderRichText(value.rich_text)}</h3>;
-      case 'paragraph':
-        return <p className="my-2 leading-relaxed">{renderRichText(value.rich_text)}</p>;
-      case 'bulleted_list_item':
-        return <li className="ml-6 list-disc">{renderRichText(value.rich_text)}</li>;
-      case 'numbered_list_item': // 追加
-        return <li className="ml-6 list-decimal">{renderRichText(value.rich_text)}</li>;
-      case 'callout': { // 追加
-        const calloutColorMap: { [key: string]: string } = {
-          default: "bg-gray-100 border-gray-200",
-          gray: "bg-gray-100 border-gray-200",
-          brown: "bg-yellow-100 border-yellow-200",
-          orange: "bg-orange-100 border-orange-200",
-          yellow: "bg-yellow-100 border-yellow-200",
-          green: "bg-green-100 border-green-200",
-          blue: "bg-blue-100 border-blue-200",
-          purple: "bg-purple-100 border-purple-200",
-          pink: "bg-pink-100 border-pink-200",
-          red: "bg-red-100 border-red-200",
-          gray_background: "bg-gray-100",
-          brown_background: "bg-yellow-100",
-          orange_background: "bg-orange-100",
-          yellow_background: "bg-yellow-100",
-          green_background: "bg-green-100",
-          blue_background: "bg-blue-100",
-          purple_background: "bg-purple-100",
-          pink_background: "bg-pink-100",
-          red_background: "bg-red-100",
-        };
-        const colorClass = calloutColorMap[value.color] || calloutColorMap.default;
-        return (
-          <div className={`my-4 p-4 rounded-md border ${colorClass} flex items-start gap-3`}>
-            {value.icon && (
-              <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-                {value.icon.type === 'emoji' && <span>{value.icon.emoji}</span>}
-                {value.icon.type === 'external' && <Image src={value.icon.external.url} alt="callout icon" width={24} height={24} />}
-              </div>
-            )}
-            <div className="flex-grow">{renderRichText(value.rich_text)}</div>
-          </div>
-        );
-      }
-    }
-  }
-
   switch (type) {
-    case 'image':
-      if (value && typeof value === 'object' && 'type' in value) {
-        const src = value.type === 'external' ? value.external.url : value.file.url;
-        const caption = value.caption.length > 0 ? value.caption[0].plain_text : '';
-        return (
-          <figure className="my-4">
-            <div className="relative w-full h-auto aspect-video">
-              <Image
-                src={src}
-                alt={caption || 'content image'}
-                fill
-                unoptimized
-                className="object-contain rounded-md"
-              />
+    case 'heading_1':
+      return <h1 className="text-3xl font-bold my-4">{block.heading_1 && renderRichText(block.heading_1.rich_text)}</h1>;
+    case 'heading_2':
+      return <h2 className="text-2xl font-bold my-3">{block.heading_2 && renderRichText(block.heading_2.rich_text)}</h2>;
+    case 'heading_3':
+      return <h3 className="text-xl font-bold my-2">{block.heading_3 && renderRichText(block.heading_3.rich_text)}</h3>;
+    case 'paragraph':
+      return <p className="my-2 leading-relaxed">{block.paragraph && renderRichText(block.paragraph.rich_text)}</p>;
+    case 'bulleted_list_item':
+      return <li className="ml-6 list-disc">{block.bulleted_list_item && renderRichText(block.bulleted_list_item.rich_text)}</li>;
+    case 'numbered_list_item':
+      return <li className="ml-6 list-decimal">{block.numbered_list_item && renderRichText(block.numbered_list_item.rich_text)}</li>;
+    case 'callout': {
+      const value = block.callout;
+      if (!value) return null;
+      const calloutColorMap: { [key: string]: string } = {
+        default: "bg-gray-100 border-gray-200",
+        gray: "bg-gray-100 border-gray-200",
+        brown: "bg-yellow-100 border-yellow-200",
+        orange: "bg-orange-100 border-orange-200",
+        yellow: "bg-yellow-100 border-yellow-200",
+        green: "bg-green-100 border-green-200",
+        blue: "bg-blue-100 border-blue-200",
+        purple: "bg-purple-100 border-purple-200",
+        pink: "bg-pink-100 border-pink-200",
+        red: "bg-red-100 border-red-200",
+        gray_background: "bg-gray-100",
+        brown_background: "bg-yellow-100",
+        orange_background: "bg-orange-100",
+        yellow_background: "bg-yellow-100",
+        green_background: "bg-green-100",
+        blue_background: "bg-blue-100",
+        purple_background: "bg-purple-100",
+        pink_background: "bg-pink-100",
+        red_background: "bg-red-100",
+      };
+      const colorClass = calloutColorMap[value.color] || calloutColorMap.default;
+      return (
+        <div className={`my-4 p-4 rounded-md border ${colorClass} flex items-start gap-3`}>
+          {value.icon && (
+            <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+              {value.icon.type === 'emoji' && <span>{value.icon.emoji}</span>}
+              {value.icon.type === 'external' && <Image src={value.icon.external.url} alt="callout icon" width={24} height={24} />}
             </div>
-            {caption && <figcaption className="text-center text-sm text-gray-500 mt-2">{caption}</figcaption>}
-          </figure>
-        );
-      }
-      break;
+          )}
+          <div className="flex-grow">{renderRichText(value.rich_text)}</div>
+        </div>
+      );
+    }
+    case 'image': {
+      const value = block.image;
+      if (!value) return null;
+      const src = value.type === 'external' ? value.external.url : value.file.url;
+      const caption = value.caption.length > 0 ? value.caption[0].plain_text : '';
+      return (
+        <figure className="my-4">
+          <div className="relative w-full h-auto aspect-video">
+            <Image
+              src={src}
+              alt={caption || 'content image'}
+              fill
+              unoptimized
+              className="object-contain rounded-md"
+            />
+          </div>
+          {caption && <figcaption className="text-center text-sm text-gray-500 mt-2">{caption}</figcaption>}
+        </figure>
+      );
+    }
     case 'divider':
       return <hr className="my-6" />;
-    // 追加: リストグループのレンダリング
-    case 'list_item_group':
-      if (value && typeof value === 'object' && 'type' in value && 'items' in value) {
-        const ListWrapper = value.type === 'numbered_list_item' ? 'ol' : 'ul';
-        return (
-          <ListWrapper className="my-2 space-y-1">
-            {(value.items as BlockType[]).map(item => <Block key={item.id} block={item} />)}
-          </ListWrapper>
-        );
-      }
-      break;
+    case 'list_item_group': {
+      const value = block.list_item_group;
+      if (!value) return null;
+      const ListWrapper = value.type === 'numbered_list_item' ? 'ol' : 'ul';
+      return (
+        <ListWrapper className="my-2 space-y-1">
+          {value.items.map(item => <Block key={item.id} block={item} />)}
+        </ListWrapper>
+      );
+    }
     default:
       return <p className="text-xs text-gray-400">Unsupported block: {type}</p>;
   }
-  return null;
 };
 
 // 追加: ブロックをグループ化するヘルパー関数
