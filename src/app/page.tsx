@@ -115,7 +115,13 @@ const Block = ({ block }: { block: BlockType }) => {
         return (
           <figure className="my-4">
             <div className="relative w-full h-auto aspect-video">
-              <Image src={src} alt={caption || 'content image'} fill className="object-contain rounded-md" />
+              <Image
+                src={src}
+                alt={caption || 'content image'}
+                fill
+                unoptimized
+                className="object-contain rounded-md"
+              />
             </div>
             {caption && <figcaption className="text-center text-sm text-gray-500 mt-2">{caption}</figcaption>}
           </figure>

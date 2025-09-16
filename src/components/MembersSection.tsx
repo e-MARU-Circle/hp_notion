@@ -117,7 +117,15 @@ const MembersSection = ({ pages }: MembersSectionProps) => {
           return (
             <motion.div key={page.id} className="space-y-2" variants={cardVariants}>
               <div className="aspect-square rounded-full bg-gray-200 overflow-hidden relative">
-                {imageUrl && <Image src={imageUrl} alt={name} fill className="object-cover" />}
+                {imageUrl && (
+                  <Image
+                    src={imageUrl}
+                    alt={name}
+                    fill
+                    unoptimized
+                    className="object-cover"
+                  />
+                )}
               </div>
               <p className="font-bold text-sm">{name}</p>
               <div className="flex flex-wrap justify-center gap-1 pt-1">
