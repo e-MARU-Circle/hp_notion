@@ -204,8 +204,13 @@ const groupListItems = (blocks: BlockType[]): BlockType[] => {
   const groupedBlocks: BlockType[] = [];
   let tempList: BlockType[] = [];
 
+  type ListItemType = 'bulleted_list_item' | 'numbered_list_item';
+  const isListItemType = (type: string | null): type is ListItemType => {
+    return type === 'bulleted_list_item' || type === 'numbered_list_item';
+  };
+
   blocks.forEach((block, index) => {
-    const isListItem = block.type === 'bulleted_list_item' || block.type === 'numbered_list_item';
+    const isListItem = isListItemType(block.type);
     const prevBlockType = index > 0 ? blocks[index - 1].type : null;
 
     if (isListItem) {
@@ -214,22 +219,22 @@ const groupListItems = (blocks: BlockType[]): BlockType[] => {
         tempList.push(block);
       } else {
         // 新しいリストの開始
-        if (tempList.length > 0) {
+        if (tempList.length > 0 && isListItemType(prevBlockType)) {
           groupedBlocks.push({
             id: `group-${index - tempList.length}`,
             type: 'list_item_group',
-            list_item_group: { type: prevBlockType as any, items: tempList },
+            list_item_group: { type: prevBlockType, items: tempList },
           });
         }
         tempList = [block];
       }
     } else {
       // リストが終了
-      if (tempList.length > 0) {
+      if (tempList.length > 0 && isListItemType(prevBlockType)) {
         groupedBlocks.push({
           id: `group-${index - tempList.length}`,
           type: 'list_item_group',
-          list_item_group: { type: prevBlockType as any, items: tempList },
+          list_item_group: { type: prevBlockType, items: tempList },
         });
         tempList = [];
       }
@@ -239,11 +244,14 @@ const groupListItems = (blocks: BlockType[]): BlockType[] => {
 
   // 最後のリストグループを追加
   if (tempList.length > 0) {
-    groupedBlocks.push({
-      id: `group-${blocks.length - tempList.length}`,
-      type: 'list_item_group',
-      list_item_group: { type: blocks[blocks.length - 1].type as any, items: tempList },
-    });
+    const lastBlockType = blocks[blocks.length - 1].type;
+    if (isListItemType(lastBlockType)) {
+      groupedBlocks.push({
+        id: `group-${blocks.length - tempList.length}`,
+        type: 'list_item_group',
+        list_item_group: { type: lastBlockType, items: tempList },
+      });
+    }
   }
 
   return groupedBlocks;

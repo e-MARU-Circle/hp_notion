@@ -18,7 +18,7 @@ export async function fetchWithRetry(
     const ac = new AbortController();
     const t = setTimeout(() => ac.abort(), timeoutMs);
     try {
-      const res = await fetch(input as any, { ...init, signal: ac.signal });
+      const res = await fetch(input, { ...init, signal: ac.signal });
       clearTimeout(t);
       if (res.ok) return res;
       // Retry on 5xx
