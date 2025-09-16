@@ -47,6 +47,16 @@ interface BlockType {
   heading_3?: { rich_text: RichTextType[] };
   paragraph?: { rich_text: RichTextType[] };
   bulleted_list_item?: { rich_text: RichTextType[] };
+  numbered_list_item?: { rich_text: RichTextType[] }; // 追加
+  callout?: { // 追加
+    rich_text: RichTextType[];
+    icon: {
+      type: 'emoji' | 'external';
+      emoji?: string;
+      external?: { url: string };
+    };
+    color: string;
+  };
   image?: {
     type: 'external' | 'file';
     file: { url: string };
@@ -104,6 +114,43 @@ const Block = ({ block }: { block: BlockType }) => {
         return <p className="my-2 leading-relaxed">{renderRichText(value.rich_text)}</p>;
       case 'bulleted_list_item':
         return <li className="ml-6 list-disc">{renderRichText(value.rich_text)}</li>;
+      case 'numbered_list_item': // 追加
+        return <li className="ml-6 list-decimal">{renderRichText(value.rich_text)}</li>;
+      case 'callout': { // 追加
+        const calloutColorMap: { [key: string]: string } = {
+          default: "bg-gray-100 border-gray-200",
+          gray: "bg-gray-100 border-gray-200",
+          brown: "bg-yellow-100 border-yellow-200",
+          orange: "bg-orange-100 border-orange-200",
+          yellow: "bg-yellow-100 border-yellow-200",
+          green: "bg-green-100 border-green-200",
+          blue: "bg-blue-100 border-blue-200",
+          purple: "bg-purple-100 border-purple-200",
+          pink: "bg-pink-100 border-pink-200",
+          red: "bg-red-100 border-red-200",
+          gray_background: "bg-gray-100",
+          brown_background: "bg-yellow-100",
+          orange_background: "bg-orange-100",
+          yellow_background: "bg-yellow-100",
+          green_background: "bg-green-100",
+          blue_background: "bg-blue-100",
+          purple_background: "bg-purple-100",
+          pink_background: "bg-pink-100",
+          red_background: "bg-red-100",
+        };
+        const colorClass = calloutColorMap[value.color] || calloutColorMap.default;
+        return (
+          <div className={`my-4 p-4 rounded-md border ${colorClass} flex items-start gap-3`}>
+            {value.icon && (
+              <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                {value.icon.type === 'emoji' && <span>{value.icon.emoji}</span>}
+                {value.icon.type === 'external' && <Image src={value.icon.external.url} alt="callout icon" width={24} height={24} />}
+              </div>
+            )}
+            <div className="flex-grow">{renderRichText(value.rich_text)}</div>
+          </div>
+        );
+      }
     }
   }
 
