@@ -64,6 +64,11 @@ interface BlockType {
     caption: { plain_text: string }[];
   };
   divider?: Record<string, never>;
+  // リストアイテムのグループを表す仮想的なブロックタイプ
+  list_item_group?: {
+    type: 'bulleted_list_item' | 'numbered_list_item';
+    items: BlockType[];
+  };
 }
 
 
@@ -177,10 +182,71 @@ const Block = ({ block }: { block: BlockType }) => {
       break;
     case 'divider':
       return <hr className="my-6" />;
+    // 追加: リストグループのレンダリング
+    case 'list_item_group':
+      if (value && typeof value === 'object' && 'type' in value && 'items' in value) {
+        const ListWrapper = value.type === 'numbered_list_item' ? 'ol' : 'ul';
+        return (
+          <ListWrapper className="my-2 space-y-1">
+            {(value.items as BlockType[]).map(item => <Block key={item.id} block={item} />)}
+          </ListWrapper>
+        );
+      }
+      break;
     default:
       return <p className="text-xs text-gray-400">Unsupported block: {type}</p>;
   }
   return null;
+};
+
+// 追加: ブロックをグループ化するヘルパー関数
+const groupListItems = (blocks: BlockType[]): BlockType[] => {
+  const groupedBlocks: BlockType[] = [];
+  let tempList: BlockType[] = [];
+
+  blocks.forEach((block, index) => {
+    const isListItem = block.type === 'bulleted_list_item' || block.type === 'numbered_list_item';
+    const prevBlockType = index > 0 ? blocks[index - 1].type : null;
+
+    if (isListItem) {
+      // 前のブロックも同じタイプのリストアイテムかチェック
+      if (block.type === prevBlockType) {
+        tempList.push(block);
+      } else {
+        // 新しいリストの開始
+        if (tempList.length > 0) {
+          groupedBlocks.push({
+            id: `group-${index - tempList.length}`,
+            type: 'list_item_group',
+            list_item_group: { type: prevBlockType as any, items: tempList },
+          });
+        }
+        tempList = [block];
+      }
+    } else {
+      // リストが終了
+      if (tempList.length > 0) {
+        groupedBlocks.push({
+          id: `group-${index - tempList.length}`,
+          type: 'list_item_group',
+          list_item_group: { type: prevBlockType as any, items: tempList },
+        });
+        tempList = [];
+      }
+      groupedBlocks.push(block);
+    }
+  });
+
+  // 最後のリストグループを追加
+  if (tempList.length > 0) {
+    groupedBlocks.push({
+      id: `group-${blocks.length - tempList.length}`,
+      type: 'list_item_group',
+      list_item_group: { type: blocks[blocks.length - 1].type as any, items: tempList },
+    });
+  }
+
+  return groupedBlocks;
 };
 
 export default function Home() {
@@ -218,7 +284,7 @@ export default function Home() {
           const res = await fetch(`/api/get-page-content/${selectedPage.id}`);
           if (!res.ok) throw new Error('Failed to fetch');
           const data = await res.json();
-          setBlocks(data);
+          setBlocks(groupListItems(data));
         } catch (error) {
           console.error("Failed to fetch page content:", error);
           setBlocks([]); // エラー時はコンテンツをクリア
