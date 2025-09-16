@@ -10,9 +10,18 @@ interface MultiSelectTag {
   color: string;
 }
 
+interface NotionFileRef {
+  external?: { url: string };
+  file?: { url: string };
+}
+
+interface TitleProperty {
+  title: { plain_text: string }[];
+}
+
 interface PageProperties {
-  顔写真?: { files: { file: { url: string } }[] };
-  タイトル?: { title: { plain_text: string }[] };
+  顔写真?: { files: NotionFileRef[] };
+  タイトル?: TitleProperty;
   担当者?: { multi_select: MultiSelectTag[] };
 }
 
@@ -39,18 +48,24 @@ const tagColorMap: { [key: string]: string } = {
 };
 
 const MembersSection = ({ pages }: MembersSectionProps) => {
-  const getPageTitle = (props: any): string | null => {
+  const isTitleProperty = (v: unknown): v is TitleProperty => {
+    if (!v || typeof v !== 'object') return false;
+    const maybe = (v as { title?: unknown }).title;
+    return Array.isArray(maybe) && typeof (maybe[0]?.plain_text) === 'string';
+  };
+
+  const getPageTitle = (props: Record<string, unknown>): string | null => {
     if (!props || typeof props !== 'object') return null;
     const candidateKeys = ['名前', 'Name', 'タイトル', '氏名', 'メンバー名'];
     for (const key of candidateKeys) {
-      const v = props[key as keyof typeof props] as any;
-      if (v && Array.isArray(v.title) && v.title[0]?.plain_text) {
-        return v.title[0].plain_text as string;
+      const v = props[key];
+      if (isTitleProperty(v)) {
+        return v.title[0]?.plain_text ?? null;
       }
     }
     for (const v of Object.values(props)) {
-      if (v && typeof v === 'object' && 'title' in v && Array.isArray((v as any).title) && (v as any).title[0]?.plain_text) {
-        return (v as any).title[0].plain_text as string;
+      if (isTitleProperty(v)) {
+        return v.title[0]?.plain_text ?? null;
       }
     }
     return null;
@@ -94,12 +109,9 @@ const MembersSection = ({ pages }: MembersSectionProps) => {
         viewport={{ once: true, amount: 0.2 }} // アニメーションは1回だけ、20%見えたら開始
       >
         {pages.map((page) => {
-          const imageUrl =
-            // Notion file can be external or file
-            (page.properties.顔写真?.files?.[0] as any)?.external?.url ||
-            (page.properties.顔写真?.files?.[0] as any)?.file?.url ||
-            null;
-          const name = getPageTitle(page.properties as any) || '名前なし';
+          const file0: NotionFileRef | undefined = page.properties.顔写真?.files?.[0];
+          const imageUrl = file0?.external?.url ?? file0?.file?.url ?? null;
+          const name = getPageTitle(page.properties as unknown as Record<string, unknown>) || '名前なし';
           const tags = page.properties.担当者?.multi_select || [];
 
           return (
