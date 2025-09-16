@@ -297,12 +297,12 @@ export default function Home() {
                         whileHover={{ y: -5 }}
                       >
                         <div className="aspect-video bg-gray-200 flex items-center justify-center p-4 overflow-hidden">
-                          <h4 className="font-semibold text-center text-gray-600 break-words">
+                          <h4 className="font-semibold text-center text-gray-600 break-words line-clamp-3">
                             {originalTitle}
                           </h4>
                         </div>
                         <div className="p-4 flex flex-col flex-grow">
-                          <h3 className="font-bold mb-2 flex-grow">{japaneseTitle}</h3>
+                          <h3 className="font-bold mb-2 flex-grow break-words line-clamp-2">{japaneseTitle}</h3>
                           <div className="mt-auto space-y-2">
                             <div>
                               <p className="text-xs font-bold mb-1 text-stone-500">キーワード:</p>
