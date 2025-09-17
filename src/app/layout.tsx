@@ -19,8 +19,8 @@ const gothicA1 = Gothic_A1({
 });
 
 export const metadata: Metadata = {
-  title: "ABOJC | 米国矯正歯科医会ジャーナルクラブ",
-  description: "ABOJCは、米国矯正歯科医会（American Board of Orthodontics）が指定する文献を探求するジャーナルクラブです。科学的根拠に基づいた確かな知見を専門家や一般の方々へ発信します。",
+  title: "ABOJC | 矯正歯科の科学的知見と解釈を発信するグループ",
+  description: "ABOJCは、American Board of Orthodonticsが指定する文献を探求するジャーナルクラブです。科学的根拠に基づいた確かな知見を専門家や一般の方々へ発信します。",
 };
 
 export default function RootLayout({
