@@ -19,8 +19,8 @@ const gothicA1 = Gothic_A1({
 });
 
 export const metadata: Metadata = {
-  title: "ABOJC 2025",
-  description: "The American Board of Orthodontics Japan Chapter (ABOJC) is a distinguished group of certified orthodontists dedicated to the highest standards of practice and patient care.",
+  title: "ABOJC | 米国矯正歯科医会ジャーナルクラブ",
+  description: "ABOJCは、米国矯正歯科医会（American Board of Orthodontics）が指定する文献を探求するジャーナルクラブです。科学的根拠に基づいた確かな知見を専門家や一般の方々へ発信します。",
 };
 
 export default function RootLayout({

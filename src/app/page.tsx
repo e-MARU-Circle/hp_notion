@@ -285,6 +285,19 @@ export default function Home() {
     }
   }, [selectedPage]);
 
+  // ポップアップ表示時にページタイトルを動的に変更
+  useEffect(() => {
+    const originalTitle = document.title;
+    if (selectedPage) {
+      const japaneseTitle = selectedPage.properties.日本語タイトル?.rich_text[0]?.plain_text || "タイトルなし";
+      document.title = `${japaneseTitle} | ABOJC`;
+    }
+    // クリーンアップ関数で元のタイトルに戻す
+    return () => {
+      document.title = originalTitle;
+    };
+  }, [selectedPage]);
+
   const tagColorMap: { [key: string]: string } = {
     default: "bg-gray-100 text-gray-800",
     gray: "bg-gray-100 text-gray-800",
