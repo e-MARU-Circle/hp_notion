@@ -134,8 +134,8 @@ const Block = ({ block }: { block: BlockType }) => {
         <div className={`my-4 p-4 rounded-md border ${colorClass} flex items-start gap-3`}>
           {value.icon && (
             <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-              {value.icon.type === 'emoji' && <span>{value.icon.emoji}</span>}
-              {value.icon.type === 'external' && <Image src={value.icon.external.url} alt="callout icon" width={24} height={24} />}
+              {value.icon.type === 'emoji' && value.icon.emoji && <span>{value.icon.emoji}</span>}
+              {value.icon.type === 'external' && value.icon.external && <Image src={value.icon.external.url} alt="callout icon" width={24} height={24} />}
             </div>
           )}
           <div className="flex-grow">{renderRichText(value.rich_text)}</div>
