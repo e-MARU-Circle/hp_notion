@@ -3,6 +3,15 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
+const navLinks = [
+  { href: '/#about', label: 'About Us' },
+  { href: '/#papers', label: '論文紹介' },
+  { href: '/#members', label: 'Group Members' },
+  { href: '/about/criteria', label: '参加基準' },
+  { href: '/about/policy', label: 'ポリシー' },
+  { href: '/#contact', label: 'Contact Us' },
+];
+
 const Footer = () => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -30,18 +39,17 @@ const Footer = () => {
   return (
     <footer className="border-t border-stone-200 mt-24">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex justify-between items-center text-sm text-stone-500">
-        <p>© 2025 ABOJC. All Rights Reserved.</p>
+        <p>&copy; 2025 ABOJC. All Rights Reserved.</p>
 
         <div className="relative flex items-center gap-3">
-          {/* Footer navigation (visible on sm+). Mirrors header anchors. */}
           <nav className="hidden sm:flex items-center gap-4">
-            <Link href="#about" className="hover:text-stone-800 transition-colors">About Us</Link>
-            <Link href="#papers" className="hover:text-stone-800 transition-colors">論文紹介</Link>
-            <Link href="#members" className="hover:text-stone-800 transition-colors">Group Members</Link>
-            <Link href="#contact" className="hover:text-stone-800 transition-colors">Contact Us</Link>
+            {navLinks.map((link) => (
+              <Link key={link.href} href={link.href} className="hover:text-stone-800 transition-colors">
+                {link.label}
+              </Link>
+            ))}
           </nav>
 
-          {/* Three-dots button to open a small window (popover) */}
           <button
             ref={buttonRef}
             type="button"
@@ -73,41 +81,18 @@ const Footer = () => {
             >
               <div className="px-2 py-1.5 text-xs uppercase tracking-wide text-stone-400">Navigation</div>
               <div className="flex flex-col">
-                <Link
-                  href="#about"
-                  role="menuitem"
-                  className="px-3 py-2 rounded-md text-stone-700 hover:bg-stone-100"
-                  onClick={() => setOpen(false)}
-                >
-                  About Us
-                </Link>
-                <Link
-                  href="#papers"
-                  role="menuitem"
-                  className="px-3 py-2 rounded-md text-stone-700 hover:bg-stone-100"
-                  onClick={() => setOpen(false)}
-                >
-                  論文紹介
-                </Link>
-                <Link
-                  href="#members"
-                  role="menuitem"
-                  className="px-3 py-2 rounded-md text-stone-700 hover:bg-stone-100"
-                  onClick={() => setOpen(false)}
-                >
-                  Group Members
-                </Link>
-                <Link
-                  href="#contact"
-                  role="menuitem"
-                  className="px-3 py-2 rounded-md text-stone-700 hover:bg-stone-100"
-                  onClick={() => setOpen(false)}
-                >
-                  Contact Us
-                </Link>
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    role="menuitem"
+                    className="px-3 py-2 rounded-md text-stone-700 hover:bg-stone-100"
+                    onClick={() => setOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
               </div>
-
-              {/* GitHub リンクは削除 */}
             </div>
           )}
         </div>

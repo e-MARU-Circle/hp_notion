@@ -1,59 +1,16 @@
 'use client';
 
 import { motion, type Variants } from 'framer-motion';
-import Image from 'next/image'; // Imageをインポート
-
-// 型定義
-interface MultiSelectTag {
-  id: string;
-  name: string;
-  color: string;
-}
-
-interface NotionFileRef {
-  external?: { url: string };
-  file?: { url: string };
-}
-
-interface TitleProperty {
-  title: { plain_text: string }[];
-}
-
-interface PageProperties {
-  顔写真?: { files: NotionFileRef[] };
-  タイトル?: TitleProperty;
-  担当者?: { multi_select: MultiSelectTag[] };
-}
-
-interface Page {
-  id: string;
-  properties: PageProperties;
-}
+import Image from 'next/image';
+import Link from 'next/link';
+import type { MultiSelectTag, NotionFileRef, TitleProperty, Page } from '@/lib/types';
+import { tagColorMap, isTitleProperty } from '@/lib/types';
 
 interface MembersSectionProps {
   pages: Page[];
 }
 
-const tagColorMap: { [key: string]: string } = {
-  default: 'bg-gray-100 text-gray-800',
-  gray: 'bg-gray-100 text-gray-800',
-  brown: 'bg-yellow-100 text-yellow-800',
-  orange: 'bg-orange-100 text-orange-800',
-  yellow: 'bg-yellow-100 text-yellow-800',
-  green: 'bg-green-100 text-green-800',
-  blue: 'bg-blue-100 text-blue-800',
-  purple: 'bg-purple-100 text-purple-800',
-  pink: 'bg-pink-100 text-pink-800',
-  red: 'bg-red-100 text-red-800',
-};
-
 const MembersSection = ({ pages }: MembersSectionProps) => {
-  const isTitleProperty = (v: unknown): v is TitleProperty => {
-    if (!v || typeof v !== 'object') return false;
-    const maybe = (v as { title?: unknown }).title;
-    return Array.isArray(maybe) && typeof (maybe[0]?.plain_text) === 'string';
-  };
-
   const getPageTitle = (props: Record<string, unknown>): string | null => {
     if (!props || typeof props !== 'object') return null;
     const candidateKeys = ['名前', 'Name', 'タイトル', '氏名', 'メンバー名'];
@@ -65,12 +22,12 @@ const MembersSection = ({ pages }: MembersSectionProps) => {
     }
     for (const v of Object.values(props)) {
       if (isTitleProperty(v)) {
-        return v.title[0]?.plain_text ?? null;
+        return (v as TitleProperty).title[0]?.plain_text ?? null;
       }
     }
     return null;
   };
-  // 親コンテナ用のアニメーション定義
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -81,7 +38,6 @@ const MembersSection = ({ pages }: MembersSectionProps) => {
     },
   } as const satisfies Variants;
 
-  // 各カード用のアニメーション定義 (ドロップイン)
   const cardVariants = {
     hidden: { y: -30, opacity: 0 },
     visible: {
@@ -105,8 +61,8 @@ const MembersSection = ({ pages }: MembersSectionProps) => {
         className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-center"
         variants={containerVariants}
         initial="hidden"
-        whileInView="visible" // スクロールして表示領域に入ったらアニメーション開始
-        viewport={{ once: true, amount: 0.2 }} // アニメーションは1回だけ、20%見えたら開始
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
       >
         {pages.map((page) => {
           const file0: NotionFileRef | undefined = page.properties.顔写真?.files?.[0];
@@ -116,18 +72,20 @@ const MembersSection = ({ pages }: MembersSectionProps) => {
 
           return (
             <motion.div key={page.id} className="space-y-2" variants={cardVariants}>
-              <div className="aspect-square rounded-full bg-gray-200 overflow-hidden relative">
-                {imageUrl && (
-                  <Image
-                    src={imageUrl}
-                    alt={name}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                )}
-              </div>
-              <p className="font-bold text-sm">{name}</p>
+              <Link href={`/members/${page.id}`} className="block group">
+                <div className="aspect-square rounded-full bg-gray-200 overflow-hidden relative group-hover:ring-2 group-hover:ring-stone-400 transition-all">
+                  {imageUrl && (
+                    <Image
+                      src={imageUrl}
+                      alt={name}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  )}
+                </div>
+                <p className="font-bold text-sm mt-2 group-hover:text-stone-600 transition-colors">{name}</p>
+              </Link>
               <div className="flex flex-wrap justify-center gap-1 pt-1">
                 {tags.map((tag: MultiSelectTag) => {
                   const colorClass = tagColorMap[tag.color] || tagColorMap.default;
