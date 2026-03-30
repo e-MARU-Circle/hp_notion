@@ -2,240 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image'; // Imageをインポート
-import HeroSection from "@/components/HeroSection";
-import MembersSection from "@/components/MembersSection";
-
-// 型定義
-interface MultiSelectTag {
-  id: string;
-  name: string;
-  color: string;
-}
-
-interface PageProperties {
-  タイトル?: { title: { plain_text: string }[] };
-  日本語タイトル?: { rich_text: { plain_text: string }[] };
-  キーワード?: { multi_select: MultiSelectTag[] };
-  担当者?: { multi_select: MultiSelectTag[] };
-  コンテンツタイプ?: { select: { name: string } };
-}
-
-interface Page {
-  id: string;
-  last_edited_time: string;
-  properties: PageProperties;
-}
-
-interface RichTextType {
-  annotations: {
-    bold: boolean;
-    italic: boolean;
-    underline: boolean;
-    code: boolean;
-  };
-  plain_text: string;
-  href: string | null;
-}
-
-// Blockの型。より具体的に定義
-interface BlockType {
-  id: string;
-  type: string;
-  heading_1?: { rich_text: RichTextType[] };
-  heading_2?: { rich_text: RichTextType[] };
-  heading_3?: { rich_text: RichTextType[] };
-  paragraph?: { rich_text: RichTextType[] };
-  bulleted_list_item?: { rich_text: RichTextType[] };
-  numbered_list_item?: { rich_text: RichTextType[] }; // 追加
-  callout?: { // 追加
-    rich_text: RichTextType[];
-    icon: {
-      type: 'emoji' | 'external';
-      emoji?: string;
-      external?: { url: string };
-    };
-    color: string;
-  };
-  image?: {
-    type: 'external' | 'file';
-    file: { url: string };
-    external: { url: string };
-    caption: { plain_text: string }[];
-  };
-  divider?: Record<string, never>;
-  // リストアイテムのグループを表す仮想的なブロックタイプ
-  list_item_group?: {
-    type: 'bulleted_list_item' | 'numbered_list_item';
-    items: BlockType[];
-  };
-}
-
-
-// Notionブロックをレンダリングするコンポーネント
-const Block = ({ block }: { block: BlockType }) => {
-  const { type } = block;
-
-  // リッチテキスト（太字やリンクなど）を処理する関数
-  const renderRichText = (richText: RichTextType[]) => {
-    return richText.map((text, index) => {
-      const { annotations, plain_text, href } = text;
-      let element: React.ReactNode = plain_text;
-
-      if (annotations.bold) element = <strong key={index}>{element}</strong>;
-      if (annotations.italic) element = <em key={index}>{element}</em>;
-      if (annotations.underline) element = <u key={index}>{element}</u>;
-      if (annotations.code) element = <code key={index} className="bg-gray-200 px-1 rounded-sm">{element}</code>;
-      if (href) element = <a href={href} key={index} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{element}</a>;
-
-      return element;
-    });
-  };
-
-  switch (type) {
-    case 'heading_1':
-      return <h1 className="text-3xl font-bold my-4">{block.heading_1 && renderRichText(block.heading_1.rich_text)}</h1>;
-    case 'heading_2':
-      return <h2 className="text-2xl font-bold my-3">{block.heading_2 && renderRichText(block.heading_2.rich_text)}</h2>;
-    case 'heading_3':
-      return <h3 className="text-xl font-bold my-2">{block.heading_3 && renderRichText(block.heading_3.rich_text)}</h3>;
-    case 'paragraph':
-      return <p className="my-2 leading-relaxed">{block.paragraph && renderRichText(block.paragraph.rich_text)}</p>;
-    case 'bulleted_list_item':
-      return <li className="ml-6 list-disc">{block.bulleted_list_item && renderRichText(block.bulleted_list_item.rich_text)}</li>;
-    case 'numbered_list_item':
-      return <li className="ml-6 list-decimal">{block.numbered_list_item && renderRichText(block.numbered_list_item.rich_text)}</li>;
-    case 'callout': {
-      const value = block.callout;
-      if (!value) return null;
-      const calloutColorMap: { [key: string]: string } = {
-        default: "bg-gray-100 border-gray-200",
-        gray: "bg-gray-100 border-gray-200",
-        brown: "bg-yellow-100 border-yellow-200",
-        orange: "bg-orange-100 border-orange-200",
-        yellow: "bg-yellow-100 border-yellow-200",
-        green: "bg-green-100 border-green-200",
-        blue: "bg-blue-100 border-blue-200",
-        purple: "bg-purple-100 border-purple-200",
-        pink: "bg-pink-100 border-pink-200",
-        red: "bg-red-100 border-red-200",
-        gray_background: "bg-gray-100",
-        brown_background: "bg-yellow-100",
-        orange_background: "bg-orange-100",
-        yellow_background: "bg-yellow-100",
-        green_background: "bg-green-100",
-        blue_background: "bg-blue-100",
-        purple_background: "bg-purple-100",
-        pink_background: "bg-pink-100",
-        red_background: "bg-red-100",
-      };
-      const colorClass = calloutColorMap[value.color] || calloutColorMap.default;
-      return (
-        <div className={`my-4 p-4 rounded-md border ${colorClass} flex items-start gap-3`}>
-          {value.icon && (
-            <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-              {value.icon.type === 'emoji' && value.icon.emoji && <span>{value.icon.emoji}</span>}
-              {value.icon.type === 'external' && value.icon.external && <Image src={value.icon.external.url} alt="callout icon" width={24} height={24} />}
-            </div>
-          )}
-          <div className="flex-grow">{renderRichText(value.rich_text)}</div>
-        </div>
-      );
-    }
-    case 'image': {
-      const value = block.image;
-      if (!value) return null;
-      const src = value.type === 'external' ? value.external.url : value.file.url;
-      const caption = value.caption.length > 0 ? value.caption[0].plain_text : '';
-      return (
-        <figure className="my-4">
-          <div className="relative w-full h-auto aspect-video">
-            <Image
-              src={src}
-              alt={caption || 'content image'}
-              fill
-              unoptimized
-              className="object-contain rounded-md"
-            />
-          </div>
-          {caption && <figcaption className="text-center text-sm text-gray-500 mt-2">{caption}</figcaption>}
-        </figure>
-      );
-    }
-    case 'divider':
-      return <hr className="my-6" />;
-    case 'list_item_group': {
-      const value = block.list_item_group;
-      if (!value) return null;
-      const ListWrapper = value.type === 'numbered_list_item' ? 'ol' : 'ul';
-      return (
-        <ListWrapper className="my-2 space-y-1">
-          {value.items.map(item => <Block key={item.id} block={item} />)}
-        </ListWrapper>
-      );
-    }
-    default:
-      return <p className="text-xs text-gray-400">Unsupported block: {type}</p>;
-  }
-};
-
-// 追加: ブロックをグループ化するヘルパー関数
-const groupListItems = (blocks: BlockType[]): BlockType[] => {
-  const groupedBlocks: BlockType[] = [];
-  let tempList: BlockType[] = [];
-
-  type ListItemType = 'bulleted_list_item' | 'numbered_list_item';
-  const isListItemType = (type: string | null): type is ListItemType => {
-    return type === 'bulleted_list_item' || type === 'numbered_list_item';
-  };
-
-  blocks.forEach((block, index) => {
-    const isListItem = isListItemType(block.type);
-    const prevBlockType = index > 0 ? blocks[index - 1].type : null;
-
-    if (isListItem) {
-      // 前のブロックも同じタイプのリストアイテムかチェック
-      if (block.type === prevBlockType) {
-        tempList.push(block);
-      } else {
-        // 新しいリストの開始
-        if (tempList.length > 0 && isListItemType(prevBlockType)) {
-          groupedBlocks.push({
-            id: `group-${index - tempList.length}`,
-            type: 'list_item_group',
-            list_item_group: { type: prevBlockType, items: tempList },
-          });
-        }
-        tempList = [block];
-      }
-    } else {
-      // リストが終了
-      if (tempList.length > 0 && isListItemType(prevBlockType)) {
-        groupedBlocks.push({
-          id: `group-${index - tempList.length}`,
-          type: 'list_item_group',
-          list_item_group: { type: prevBlockType, items: tempList },
-        });
-        tempList = [];
-      }
-      groupedBlocks.push(block);
-    }
-  });
-
-  // 最後のリストグループを追加
-  if (tempList.length > 0) {
-    const lastBlockType = blocks[blocks.length - 1].type;
-    if (isListItemType(lastBlockType)) {
-      groupedBlocks.push({
-        id: `group-${blocks.length - tempList.length}`,
-        type: 'list_item_group',
-        list_item_group: { type: lastBlockType, items: tempList },
-      });
-    }
-  }
-
-  return groupedBlocks;
-};
+import Link from 'next/link';
+import HeroSection from '@/components/HeroSection';
+import MembersSection from '@/components/MembersSection';
+import { NotionContent } from '@/components/NotionBlock';
+import type { Page, MultiSelectTag, BlockType } from '@/lib/types';
+import { tagColorMap, extractTitle, extractJpTitle } from '@/lib/types';
+import { groupListItems } from '@/components/NotionBlock';
 
 export default function Home() {
   const [groupedPages, setGroupedPages] = useState<Record<string, Page[]>>({});
@@ -250,14 +23,14 @@ export default function Home() {
         if (!res.ok) throw new Error('Failed to fetch pages');
         const pages = (await res.json()) as Page[];
         const grouped = pages.reduce((acc: Record<string, Page[]>, page: Page) => {
-          const contentType = page.properties.コンテンツタイプ?.select?.name || "その他";
+          const contentType = page.properties.コンテンツタイプ?.select?.name || 'その他';
           if (!acc[contentType]) acc[contentType] = [];
           acc[contentType].push(page);
           return acc;
         }, {});
         setGroupedPages(grouped);
       } catch (error) {
-        console.error("Failed to fetch pages:", error);
+        console.error('Failed to fetch pages:', error);
       }
     };
     fetchPages();
@@ -274,29 +47,16 @@ export default function Home() {
           const data = await res.json();
           setBlocks(groupListItems(data));
         } catch (error) {
-          console.error("Failed to fetch page content:", error);
-          setBlocks([]); // エラー時はコンテンツをクリア
+          console.error('Failed to fetch page content:', error);
+          setBlocks([]);
         }
         setIsLoading(false);
       };
       fetchBlocks();
     } else {
-      setBlocks([]); // ポップアップを閉じたら内容をクリア
+      setBlocks([]);
     }
   }, [selectedPage]);
-
-  const tagColorMap: { [key: string]: string } = {
-    default: "bg-gray-100 text-gray-800",
-    gray: "bg-gray-100 text-gray-800",
-    brown: "bg-yellow-100 text-yellow-800",
-    orange: "bg-orange-100 text-orange-800",
-    yellow: "bg-yellow-100 text-yellow-800",
-    green: "bg-green-100 text-green-800",
-    blue: "bg-blue-100 text-blue-800",
-    purple: "bg-purple-100 text-purple-800",
-    pink: "bg-pink-100 text-pink-800",
-    red: "bg-red-100 text-red-800",
-  };
 
   return (
     <>
@@ -336,7 +96,7 @@ export default function Home() {
         </section>
 
         {Object.entries(groupedPages).map(([contentType, pages]) => {
-          const isMembers = /member/i.test(contentType) || contentType.includes("メンバー");
+          const isMembers = /member/i.test(contentType) || contentType.includes('メンバー');
           if (isMembers) {
             const sortedMembers = [...pages].sort((a, b) =>
               new Date(b.last_edited_time).getTime() - new Date(a.last_edited_time).getTime()
@@ -351,44 +111,11 @@ export default function Home() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {pages.map((page) => {
-                    // 柔軟なタイトル抽出（Notionの title/rich_text 型を優先）
-                    type TitleProperty = { title: { plain_text: string }[] };
-                    type RichTextProperty = { rich_text: { plain_text: string }[] };
-                    const isTitleProperty = (v: unknown): v is TitleProperty =>
-                      !!v && typeof v === 'object' && Array.isArray((v as TitleProperty).title) &&
-                      typeof (v as TitleProperty).title[0]?.plain_text === 'string';
-                    const isRichTextProperty = (v: unknown): v is RichTextProperty =>
-                      !!v && typeof v === 'object' && Array.isArray((v as RichTextProperty).rich_text) &&
-                      typeof (v as RichTextProperty).rich_text[0]?.plain_text === 'string';
-
-                    const extractTitle = (props: PageProperties): string => {
-                      const rec = props as unknown as Record<string, unknown>;
-                      // 既知キーを優先
-                      const knownKeys = ["タイトル", "Title", "原著タイトル", "英語タイトル"] as const;
-                      for (const k of knownKeys) {
-                        const v = rec[k];
-                        if (isTitleProperty(v)) return v.title[0]?.plain_text ?? '';
-                      }
-                      // 任意の title 型をフォールバック
-                      for (const v of Object.values(rec)) {
-                        if (isTitleProperty(v)) return v.title[0]?.plain_text ?? '';
-                      }
-                      return "";
-                    };
-                    const extractJpTitle = (props: PageProperties): string | null => {
-                      const rec = props as unknown as Record<string, unknown>;
-                      const candidates = ["日本語タイトル", "Japanese Title", "和訳タイトル", "和題"] as const;
-                      for (const k of candidates) {
-                        const v = rec[k];
-                        if (isRichTextProperty(v)) return v.rich_text[0]?.plain_text ?? null;
-                      }
-                      return null;
-                    };
-
                     const originalTitle = extractTitle(page.properties);
-                    const japaneseTitle = extractJpTitle(page.properties) || "タイトルなし";
+                    const japaneseTitle = extractJpTitle(page.properties) || 'タイトルなし';
                     const keywords = page.properties.キーワード?.multi_select || [];
                     const authors = page.properties.担当者?.multi_select || [];
+                    const lastEdited = new Date(page.last_edited_time).toLocaleDateString('ja-JP');
 
                     return (
                       <motion.div
@@ -431,6 +158,16 @@ export default function Home() {
                                 ))}
                               </div>
                             </div>
+                            {/* 最終更新日（優先度6） */}
+                            <p className="text-xs text-stone-400">更新: {lastEdited}</p>
+                            {/* 個別ページリンク（優先度6） */}
+                            <Link
+                              href={`/papers/${page.id}`}
+                              className="inline-block text-xs text-stone-500 hover:text-stone-800 underline transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              個別ページで読む →
+                            </Link>
                           </div>
                         </div>
                       </motion.div>
@@ -447,10 +184,10 @@ export default function Home() {
             <h2 className="text-3xl font-bold tracking-tight">Contact Us</h2>
             <p className="text-stone-600 mt-4 leading-relaxed">
               現在メンバーに関する募集は行なっておりません。また、個別の症例相談は受け付けておりませんのでご了承ください。記事の内容に関するお問い合わせは
-              <a 
+              <a
                 href="https://amethyst-practice-817.notion.site/26d11c7792a88073b96df8ac1aa62b9b?pvs=105"
-                target="_blank" 
-                rel="noopener noreferrer" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"
               >
                 こちら
@@ -461,6 +198,7 @@ export default function Home() {
         </section>
       </div>
 
+      {/* モーダル（既存機能を維持） */}
       <AnimatePresence>
         {selectedPage && (
           <motion.div
@@ -475,7 +213,7 @@ export default function Home() {
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 50, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()} // 背景クリックで閉じないように
+              onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => setSelectedPage(null)}
@@ -486,8 +224,8 @@ export default function Home() {
               </button>
               {(() => {
                 if (!selectedPage) return null;
-                const originalTitle = selectedPage.properties.タイトル?.title[0]?.plain_text || "";
-                const japaneseTitle = selectedPage.properties.日本語タイトル?.rich_text[0]?.plain_text || "タイトルなし";
+                const originalTitle = selectedPage.properties.タイトル?.title[0]?.plain_text || '';
+                const japaneseTitle = selectedPage.properties.日本語タイトル?.rich_text[0]?.plain_text || 'タイトルなし';
                 const keywords = selectedPage.properties.キーワード?.multi_select || [];
                 const authors = selectedPage.properties.担当者?.multi_select || [];
 
@@ -510,12 +248,22 @@ export default function Home() {
                       </div>
                     </div>
 
+                    {/* 個別ページへのリンク */}
+                    <div className="mb-6">
+                      <Link
+                        href={`/papers/${selectedPage.id}`}
+                        className="text-sm text-stone-500 hover:text-stone-800 underline transition-colors"
+                      >
+                        個別ページで読む →
+                      </Link>
+                    </div>
+
                     {isLoading ? (
                       <div className="flex justify-center items-center h-48">
                         <p>Loading...</p>
                       </div>
                     ) : (
-                      <div className="prose max-w-none">{blocks.map((block) => <Block key={block.id} block={block} />)}</div>
+                      <NotionContent blocks={blocks} />
                     )}
                   </>
                 );
