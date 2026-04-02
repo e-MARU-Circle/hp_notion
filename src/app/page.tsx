@@ -1,62 +1,26 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import HeroSection from '@/components/HeroSection';
 import MembersSection from '@/components/MembersSection';
-import { NotionContent } from '@/components/NotionBlock';
-import type { Page, MultiSelectTag, BlockType } from '@/lib/types';
+import type { Page, MultiSelectTag } from '@/lib/types';
 import { tagColorMap, extractTitle, extractJpTitle } from '@/lib/types';
-import { groupListItems } from '@/components/NotionBlock';
+import { getPublishedPages } from '@/lib/notion';
 
-export default function Home() {
-  const [groupedPages, setGroupedPages] = useState<Record<string, Page[]>>({});
-  const [selectedPage, setSelectedPage] = useState<Page | null>(null);
-  const [blocks, setBlocks] = useState<BlockType[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+export const revalidate = 60;
 
-  useEffect(() => {
-    const fetchPages = async () => {
-      try {
-        const res = await fetch('/api/get-pages');
-        if (!res.ok) throw new Error('Failed to fetch pages');
-        const pages = (await res.json()) as Page[];
-        const grouped = pages.reduce((acc: Record<string, Page[]>, page: Page) => {
-          const contentType = page.properties.コンテンツタイプ?.select?.name || 'その他';
-          if (!acc[contentType]) acc[contentType] = [];
-          acc[contentType].push(page);
-          return acc;
-        }, {});
-        setGroupedPages(grouped);
-      } catch (error) {
-        console.error('Failed to fetch pages:', error);
-      }
-    };
-    fetchPages();
-  }, []);
+export default async function Home() {
+  let groupedPages: Record<string, Page[]> = {};
 
-  // ポップアップ表示時に本文データを取得
-  useEffect(() => {
-    if (selectedPage) {
-      const fetchBlocks = async () => {
-        setIsLoading(true);
-        try {
-          const res = await fetch(`/api/get-page-content/${selectedPage.id}`);
-          if (!res.ok) throw new Error('Failed to fetch');
-          const data = await res.json();
-          setBlocks(groupListItems(data));
-        } catch (error) {
-          console.error('Failed to fetch page content:', error);
-          setBlocks([]);
-        }
-        setIsLoading(false);
-      };
-      fetchBlocks();
-    } else {
-      setBlocks([]);
-    }
-  }, [selectedPage]);
+  try {
+    const pages = await getPublishedPages();
+    groupedPages = pages.reduce((acc: Record<string, Page[]>, page: Page) => {
+      const contentType = page.properties.コンテンツタイプ?.select?.name || 'その他';
+      if (!acc[contentType]) acc[contentType] = [];
+      acc[contentType].push(page);
+      return acc;
+    }, {});
+  } catch (error) {
+    console.error('Failed to fetch pages:', error);
+  }
 
   return (
     <>
@@ -118,11 +82,10 @@ export default function Home() {
                     const lastEdited = new Date(page.last_edited_time).toLocaleDateString('ja-JP');
 
                     return (
-                      <motion.div
+                      <Link
                         key={page.id}
-                        className="border border-stone-200 rounded-sm overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow flex flex-col"
-                        onClick={() => setSelectedPage(page)}
-                        whileHover={{ y: -5 }}
+                        href={`/papers/${page.id}`}
+                        className="border border-stone-200 rounded-sm overflow-hidden group hover:shadow-lg transition-all hover:-translate-y-1 flex flex-col"
                       >
                         <div className="aspect-video bg-gray-200 flex items-center justify-center p-4 overflow-hidden">
                           <h4 className="font-semibold text-center text-gray-600 break-words line-clamp-3">
@@ -138,7 +101,7 @@ export default function Home() {
                                 {keywords.map((tag: MultiSelectTag) => (
                                   <span
                                     key={tag.id}
-                                    className={`text-xs px-1.5 py-0.5 rounded-full break-words ${tagColorMap[tag.color]}`}
+                                    className={`text-xs px-1.5 py-0.5 rounded-full break-words ${tagColorMap[tag.color] || tagColorMap.default}`}
                                   >
                                     {tag.name}
                                   </span>
@@ -151,26 +114,17 @@ export default function Home() {
                                 {authors.map((tag: MultiSelectTag) => (
                                   <span
                                     key={tag.id}
-                                    className={`text-xs px-1.5 py-0.5 rounded-full break-words ${tagColorMap[tag.color]}`}
+                                    className={`text-xs px-1.5 py-0.5 rounded-full break-words ${tagColorMap[tag.color] || tagColorMap.default}`}
                                   >
                                     {tag.name}
                                   </span>
                                 ))}
                               </div>
                             </div>
-                            {/* 最終更新日（優先度6） */}
                             <p className="text-xs text-stone-400">更新: {lastEdited}</p>
-                            {/* 個別ページリンク（優先度6） */}
-                            <Link
-                              href={`/papers/${page.id}`}
-                              className="inline-block text-xs text-stone-500 hover:text-stone-800 underline transition-colors"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              個別ページで読む →
-                            </Link>
                           </div>
                         </div>
-                      </motion.div>
+                      </Link>
                     );
                   })}
                 </div>
@@ -197,81 +151,6 @@ export default function Home() {
           </div>
         </section>
       </div>
-
-      {/* モーダル（既存機能を維持） */}
-      <AnimatePresence>
-        {selectedPage && (
-          <motion.div
-            className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSelectedPage(null)}
-          >
-            <motion.div
-              className="bg-white p-8 rounded-lg max-w-3xl w-full h-[90vh] overflow-y-auto relative"
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 50, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setSelectedPage(null)}
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition-colors z-10"
-                aria-label="Close modal"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-              </button>
-              {(() => {
-                if (!selectedPage) return null;
-                const originalTitle = selectedPage.properties.タイトル?.title[0]?.plain_text || '';
-                const japaneseTitle = selectedPage.properties.日本語タイトル?.rich_text[0]?.plain_text || 'タイトルなし';
-                const keywords = selectedPage.properties.キーワード?.multi_select || [];
-                const authors = selectedPage.properties.担当者?.multi_select || [];
-
-                return (
-                  <>
-                    <h3 className="text-xl font-semibold text-stone-500 mb-1">{originalTitle}</h3>
-                    <h2 className="text-3xl font-bold mb-4">{japaneseTitle}</h2>
-                    <div className="flex flex-wrap gap-x-6 gap-y-2 mb-6 border-b border-stone-200 pb-4">
-                      <div>
-                        <p className="text-sm font-bold mb-1 text-stone-500">キーワード:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {keywords.map((tag: MultiSelectTag) => <span key={tag.id} className={`text-sm px-2 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold mb-1 text-stone-500">担当者:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {authors.map((tag: MultiSelectTag) => <span key={tag.id} className={`text-sm px-2 py-0.5 rounded-full ${tagColorMap[tag.color]}`}>{tag.name}</span>)}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 個別ページへのリンク */}
-                    <div className="mb-6">
-                      <Link
-                        href={`/papers/${selectedPage.id}`}
-                        className="text-sm text-stone-500 hover:text-stone-800 underline transition-colors"
-                      >
-                        個別ページで読む →
-                      </Link>
-                    </div>
-
-                    {isLoading ? (
-                      <div className="flex justify-center items-center h-48">
-                        <p>Loading...</p>
-                      </div>
-                    ) : (
-                      <NotionContent blocks={blocks} />
-                    )}
-                  </>
-                );
-              })()}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   );
 }
