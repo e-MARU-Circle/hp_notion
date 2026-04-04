@@ -40,11 +40,20 @@ export const metadata: Metadata = {
     siteName: 'ABOJC',
     locale: 'ja_JP',
     type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'ABOJC - 矯正歯科の科学的知見と解釈を発信するジャーナルクラブ',
+      },
+    ],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
+    images: ['/og-image.png'],
   },
   robots: {
     index: true,

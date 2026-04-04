@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@notionhq/client": "^5.16.0",
     "framer-motion": "^12.23.12",
     "next": "^16.2.1",
     "react": "19.1.0",

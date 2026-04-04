@@ -5,7 +5,8 @@ import type { Page, MultiSelectTag } from '@/lib/types';
 import { tagColorMap, extractTitle, extractJpTitle } from '@/lib/types';
 import { getPublishedPages } from '@/lib/notion';
 
-export const revalidate = 60;
+// On-demand ISR (webhook) + 1時間フォールバック
+export const revalidate = 3600;
 
 export default async function Home() {
   let groupedPages: Record<string, Page[]> = {};

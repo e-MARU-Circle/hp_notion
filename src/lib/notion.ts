@@ -1,117 +1,129 @@
-import { fetchWithRetry } from './fetchWithRetry';
+import { Client } from '@notionhq/client';
+import type {
+  PageObjectResponse,
+} from '@notionhq/client/build/src/api-endpoints';
 import type { Page, BlockType } from './types';
 
-const NOTION_VERSION = '2022-06-28';
+// ── Notion クライアント（リトライ・レート制限は SDK が処理） ──
 
-function getCredentials() {
-  const databaseId = process.env.NOTION_DATABASE_ID;
-  const apiKey = process.env.NOTION_API_KEY;
-  if (!databaseId || !apiKey) {
-    throw new Error('NotionのAPIキーまたはデータベースIDが設定されていません。');
+function getClient(): Client {
+  const auth = process.env.NOTION_API_KEY;
+  if (!auth) {
+    throw new Error('NotionのAPIキーが設定されていません。');
   }
-  return { databaseId, apiKey };
+  return new Client({ auth });
 }
 
-function notionHeaders(apiKey: string) {
+function getDatabaseId(): string {
+  const id = process.env.NOTION_DATABASE_ID;
+  if (!id) {
+    throw new Error('NotionのデータベースIDが設定されていません。');
+  }
+  return id;
+}
+
+// ── ヘルパー: SDK レスポンス → 既存 Page 型 ──
+
+function toPage(raw: PageObjectResponse): Page {
   return {
-    'Authorization': `Bearer ${apiKey}`,
-    'Notion-Version': NOTION_VERSION,
-    'Content-Type': 'application/json',
+    id: raw.id,
+    last_edited_time: raw.last_edited_time,
+    properties: raw.properties as unknown as Page['properties'],
   };
 }
 
-/**
- * Notionデータベースから公開済みの記事一覧を取得する
- */
+// ── データソースID取得（DB retrieve → data_sources[0].id） ──
+
+let cachedDataSourceId: string | undefined;
+
+async function getDataSourceId(): Promise<string> {
+  if (cachedDataSourceId) return cachedDataSourceId;
+
+  const notion = getClient();
+  const db = await notion.databases.retrieve({ database_id: getDatabaseId() });
+
+  if (!('data_sources' in db) || db.data_sources.length === 0) {
+    throw new Error('データベースからデータソースIDを取得できません。');
+  }
+
+  cachedDataSourceId = db.data_sources[0].id;
+  return cachedDataSourceId;
+}
+
+// ── 公開済みページ一覧（ページネーション対応） ──
+
 export async function getPublishedPages(): Promise<Page[]> {
-  const { databaseId, apiKey } = getCredentials();
+  const notion = getClient();
+  const dataSourceId = await getDataSourceId();
 
-  const response = await fetchWithRetry(`https://api.notion.com/v1/databases/${databaseId}/query`, {
-    method: 'POST',
-    headers: notionHeaders(apiKey),
-    body: JSON.stringify({
-      filter: {
-        property: '公開状態',
-        status: {
-          equals: '公開済み',
-        },
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    console.error('Notion APIエラー:', error);
-    throw new Error(`Notion APIからのデータ取得に失敗しました: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  return data.results as Page[];
-}
-
-/**
- * Notion ページを単一取得（メタデータ）
- */
-export async function getPageById(pageId: string): Promise<Page> {
-  const { apiKey } = getCredentials();
-
-  const response = await fetchWithRetry(`https://api.notion.com/v1/pages/${pageId}`, {
-    method: 'GET',
-    headers: notionHeaders(apiKey),
-    next: { revalidate: 60 },
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    console.error('Notion APIエラー (page):', error);
-    throw new Error(`ページ取得に失敗: ${response.statusText}`);
-  }
-
-  return (await response.json()) as Page;
-}
-
-/**
- * Notion ページのブロック（本文）を全件取得
- */
-export async function getPageBlocks(pageId: string): Promise<BlockType[]> {
-  const { apiKey } = getCredentials();
-  const accumulated: BlockType[] = [];
+  const pages: Page[] = [];
   let cursor: string | undefined;
-  let firstRequest = true;
 
   do {
-    const search = cursor ? `?start_cursor=${cursor}` : '';
-    const response = await fetchWithRetry(
-      `https://api.notion.com/v1/blocks/${pageId}/children${search}`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Notion-Version': NOTION_VERSION,
-        },
-        next: firstRequest ? { revalidate: 60 } : undefined,
-      }
-    );
+    const response = await notion.dataSources.query({
+      data_source_id: dataSourceId,
+      filter: {
+        property: '公開状態',
+        status: { equals: '公開済み' },
+      },
+      start_cursor: cursor,
+    });
 
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('Notion API エラー (blocks):', error);
-      throw new Error(`ブロック取得に失敗: ${response.statusText}`);
+    for (const result of response.results) {
+      if ('properties' in result) {
+        pages.push(toPage(result as PageObjectResponse));
+      }
     }
 
-    const data = await response.json();
-    accumulated.push(...(Array.isArray(data.results) ? data.results : []));
-    cursor = data.has_more ? data.next_cursor ?? undefined : undefined;
-    firstRequest = false;
+    cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined;
   } while (cursor);
 
-  return accumulated;
+  return pages;
 }
 
-/**
- * 公開済みページの全IDを取得（sitemap用）
- */
-export async function getAllPublishedPageIds(): Promise<{ id: string; contentType: string; lastEdited: string }[]> {
+// ── 単一ページ取得 ──
+
+export async function getPageById(pageId: string): Promise<Page> {
+  const notion = getClient();
+  const raw = await notion.pages.retrieve({ page_id: pageId });
+
+  if (!('properties' in raw)) {
+    throw new Error(`ページ ${pageId} の取得結果が不正です`);
+  }
+
+  return toPage(raw as PageObjectResponse);
+}
+
+// ── ブロック全件取得（ページネーション対応） ──
+
+export async function getPageBlocks(pageId: string): Promise<BlockType[]> {
+  const notion = getClient();
+  const blocks: BlockType[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const response = await notion.blocks.children.list({
+      block_id: pageId,
+      start_cursor: cursor,
+    });
+
+    for (const block of response.results) {
+      if ('type' in block) {
+        blocks.push(block as unknown as BlockType);
+      }
+    }
+
+    cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined;
+  } while (cursor);
+
+  return blocks;
+}
+
+// ── sitemap 用 ──
+
+export async function getAllPublishedPageIds(): Promise<
+  { id: string; contentType: string; lastEdited: string }[]
+> {
   const pages = await getPublishedPages();
   return pages.map((page) => ({
     id: page.id,

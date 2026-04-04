@@ -11,7 +11,8 @@ interface Props {
   params: Promise<{ memberId: string }>;
 }
 
-export const revalidate = 60;
+// On-demand ISR (webhook) + 1時間フォールバック
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   try {

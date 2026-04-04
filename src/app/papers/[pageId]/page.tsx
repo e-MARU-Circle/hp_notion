@@ -11,8 +11,8 @@ interface Props {
   params: Promise<{ pageId: string }>;
 }
 
-// ISR: 60秒ごとに再検証
-export const revalidate = 60;
+// On-demand ISR (webhook) + 1時間フォールバック
+export const revalidate = 3600;
 
 // ビルド時に静的生成するパスを定義
 export async function generateStaticParams() {
