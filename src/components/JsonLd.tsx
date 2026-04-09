@@ -1,6 +1,6 @@
 // 構造化データ（JSON-LD）コンポーネント
 
-const SITE_URL = 'https://abojc.vercel.app';
+const SITE_URL = 'https://abojc.com';
 
 interface JsonLdProps {
   data: Record<string, unknown>;

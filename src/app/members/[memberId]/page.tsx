@@ -115,16 +115,16 @@ export default async function MemberPage({ params }: Props) {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <PersonJsonLd
         name={name}
-        url={`https://abojc.vercel.app/members/${memberId}`}
+        url={`https://abojc.com/members/${memberId}`}
         jobTitle={getProfileField(page.properties, '役職') || undefined}
         affiliation={getProfileField(page.properties, '所属医院') || undefined}
         imageUrl={imageUrl || undefined}
       />
       <BreadcrumbJsonLd
         items={[
-          { name: 'ホーム', url: 'https://abojc.vercel.app' },
-          { name: 'メンバー', url: 'https://abojc.vercel.app/#members' },
-          { name, url: `https://abojc.vercel.app/members/${memberId}` },
+          { name: 'ホーム', url: 'https://abojc.com' },
+          { name: 'メンバー', url: 'https://abojc.com/#members' },
+          { name, url: `https://abojc.com/members/${memberId}` },
         ]}
       />
       {/* パンくずリスト */}

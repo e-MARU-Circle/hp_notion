@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { getAllPublishedPageIds } from '@/lib/notion';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://abojc.vercel.app';
+  const baseUrl = 'https://abojc.com';
 
   // 静的ページ
   const staticPages: MetadataRoute.Sitemap = [

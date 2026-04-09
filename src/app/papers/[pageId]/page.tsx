@@ -93,13 +93,13 @@ export default async function PaperPage({ params }: Props) {
         authors={authors.map((a) => a.name)}
         keywords={keywords.map((k) => k.name)}
         dateModified={page.last_edited_time}
-        url={`https://abojc.vercel.app/papers/${pageId}`}
+        url={`https://abojc.com/papers/${pageId}`}
       />
       <BreadcrumbJsonLd
         items={[
-          { name: 'ホーム', url: 'https://abojc.vercel.app' },
-          { name: '論文紹介', url: 'https://abojc.vercel.app/#papers' },
-          { name: japaneseTitle, url: `https://abojc.vercel.app/papers/${pageId}` },
+          { name: 'ホーム', url: 'https://abojc.com' },
+          { name: '論文紹介', url: 'https://abojc.com/#papers' },
+          { name: japaneseTitle, url: `https://abojc.com/papers/${pageId}` },
         ]}
       />
       {/* パンくずリスト */}
