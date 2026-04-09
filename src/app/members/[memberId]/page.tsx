@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPageById, getPublishedPages, getPageBlocks } from '@/lib/notion';
-import { PersonJsonLd } from '@/components/JsonLd';
+import { PersonJsonLd, BreadcrumbJsonLd } from '@/components/JsonLd';
 import { extractMemberName, tagColorMap, isRichTextProperty } from '@/lib/types';
 import type { BlockType, MultiSelectTag, PageProperties } from '@/lib/types';
 
@@ -36,6 +36,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: `${name} | ABOJC メンバー`,
       description: `${name} — ABOJCメンバープロフィール`,
+      alternates: {
+        canonical: `/members/${memberId}`,
+      },
       openGraph: {
         title: `${name} | ABOJC メンバー`,
         description: `${name} — ABOJCメンバープロフィール`,
@@ -115,6 +118,14 @@ export default async function MemberPage({ params }: Props) {
         url={`https://abojc.vercel.app/members/${memberId}`}
         jobTitle={getProfileField(page.properties, '役職') || undefined}
         affiliation={getProfileField(page.properties, '所属医院') || undefined}
+        imageUrl={imageUrl || undefined}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'ホーム', url: 'https://abojc.vercel.app' },
+          { name: 'メンバー', url: 'https://abojc.vercel.app/#members' },
+          { name, url: `https://abojc.vercel.app/members/${memberId}` },
+        ]}
       />
       {/* パンくずリスト */}
       <nav aria-label="パンくずリスト" className="mb-8 text-sm text-stone-500">

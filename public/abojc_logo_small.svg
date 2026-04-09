@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="179" height="56" viewBox="0 0 179 56">
+  <!-- Left accent bar -->
+  <rect x="0" y="0" width="3" height="56" fill="#1c1917"/>
+
+  <!-- Main title -->
+  <text x="14" y="28" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="900" letter-spacing="-0.5" fill="#1c1917">ABOJC</text>
+
+  <!-- Separator line -->
+  <rect x="14" y="35" width="28" height="1.5" fill="#1c1917"/>
+
+  <!-- Subtitle -->
+  <text x="14" y="48" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="8" font-weight="400" letter-spacing="3" fill="#78716c">JOURNAL CLUB</text>
+</svg>

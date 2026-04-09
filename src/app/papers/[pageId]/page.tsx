@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPageById, getPageBlocks, getPublishedPages } from '@/lib/notion';
 import { NotionContent } from '@/components/NotionBlock';
-import { ScholarlyArticleJsonLd } from '@/components/JsonLd';
+import { ScholarlyArticleJsonLd, BreadcrumbJsonLd } from '@/components/JsonLd';
 import { extractTitle, extractJpTitle, tagColorMap } from '@/lib/types';
 import type { MultiSelectTag } from '@/lib/types';
 
@@ -45,6 +45,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${jpTitle || title} | ABOJC`,
       description,
       keywords: keywords.join(', '),
+      alternates: {
+        canonical: `/papers/${pageId}`,
+      },
       openGraph: {
         title: `${jpTitle || title} | ABOJC`,
         description,
@@ -91,6 +94,13 @@ export default async function PaperPage({ params }: Props) {
         keywords={keywords.map((k) => k.name)}
         dateModified={page.last_edited_time}
         url={`https://abojc.vercel.app/papers/${pageId}`}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'ホーム', url: 'https://abojc.vercel.app' },
+          { name: '論文紹介', url: 'https://abojc.vercel.app/#papers' },
+          { name: japaneseTitle, url: `https://abojc.vercel.app/papers/${pageId}` },
+        ]}
       />
       {/* パンくずリスト */}
       <nav aria-label="パンくずリスト" className="mb-8 text-sm text-stone-500">

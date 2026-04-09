@@ -3,7 +3,7 @@ import { Inter, Gothic_A1 } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { OrganizationJsonLd } from "@/components/JsonLd";
+import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/JsonLd";
 
 // Google Fontsの読み込み設定
 const inter = Inter({
@@ -74,6 +74,7 @@ export default function RootLayout({
     <html lang="ja" className={`${inter.variable} ${gothicA1.variable}`}>
       <body className={`bg-white text-stone-900`}>
         <OrganizationJsonLd />
+        <WebSiteJsonLd />
         <div className="relative flex size-full min-h-screen flex-col group/design-root overflow-x-hidden">
           <div className="layout-container flex h-full grow flex-col">
             <Header />

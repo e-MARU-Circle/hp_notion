@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { motion, type Variants } from 'framer-motion';
 
 const HeroSection = () => {
@@ -34,12 +35,19 @@ const HeroSection = () => {
   return (
     <motion.section
       id="hero"
-      className="relative flex items-center justify-center h-screen bg-cover bg-center"
-      style={{ backgroundImage: 'url(/Photo/TOP.jpg)' }}
+      className="relative flex items-center justify-center h-screen overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 1.5 }}
     >
+      <Image
+        src="/Photo/TOP.jpg"
+        alt="ABOJC - 矯正歯科の科学的知見と解釈を発信するジャーナルクラブ"
+        fill
+        priority
+        className="object-cover"
+        sizes="100vw"
+      />
       <div className="absolute inset-0 bg-white/30"></div>
 
       <motion.h1
