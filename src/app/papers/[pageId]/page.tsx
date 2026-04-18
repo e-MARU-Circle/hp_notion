@@ -115,8 +115,8 @@ export default async function PaperPage({ params }: Props) {
 
       {/* ヘッダー */}
       <header className="mb-8">
-        <h1 className="text-xl font-semibold text-stone-500 mb-2">{originalTitle}</h1>
-        <h2 className="text-3xl font-bold mb-4">{japaneseTitle}</h2>
+        <p className="text-xl font-semibold text-stone-500 mb-2">{originalTitle}</p>
+        <h1 className="text-3xl font-bold mb-4">{japaneseTitle}</h1>
 
         <div className="flex flex-wrap gap-x-6 gap-y-3 border-b border-stone-200 pb-4">
           {keywords.length > 0 && (

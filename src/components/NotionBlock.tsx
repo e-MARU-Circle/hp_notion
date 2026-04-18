@@ -82,9 +82,9 @@ export function Block({ block }: { block: BlockType }) {
           <div className="relative w-full h-auto aspect-video">
             <Image
               src={src}
-              alt={caption || 'content image'}
+              alt={caption || '記事内の画像'}
               fill
-              unoptimized
+              sizes="(max-width: 768px) 100vw, 720px"
               className="object-contain rounded-md"
             />
           </div>

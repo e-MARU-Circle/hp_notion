@@ -1,0 +1,28 @@
+# ABOJC - American Board of Orthodontics Journal Club
+
+> ABOJCは、アメリカ矯正歯科認定医機構（American Board of Orthodontics）が指定する文献を、日本の矯正歯科専門医が集い批判的に吟味するジャーナルクラブです。科学的根拠（エビデンス）に基づいた確かな知見を、専門家や一般の方々へ日本語で発信しています。
+
+## About
+
+ABOJCは2025年に設立されました。前身となる活動は2021年に遡り、2年以上かけて膨大なABO文献リストの翻訳と発表を行いました。2025年版では、AIをはじめとする技術の進歩により、単なる翻訳ではなく文献の批判的「解釈」に価値を置き、分析結果を一般に公開しています。
+
+## Topics
+
+- 矯正歯科学 (Orthodontics)
+- American Board of Orthodontics (ABO) 指定文献
+- エビデンスベースド歯科医学 (Evidence-Based Dentistry)
+- 矯正歯科治療のシステマティックレビュー
+- 歯科矯正の科学的根拠
+
+## Content Types
+
+- **論文レビュー**: ABO指定文献の日本語による批判的吟味と解説。月2回程度更新。
+- **メンバープロフィール**: 日本各地で活躍する矯正歯科専門医の紹介。
+
+## Links
+
+- Homepage: https://abojc.com
+- Papers: https://abojc.com/#papers
+- Members: https://abojc.com/#members
+- FAQ: https://abojc.com/#faq
+- Sitemap: https://abojc.com/sitemap.xml

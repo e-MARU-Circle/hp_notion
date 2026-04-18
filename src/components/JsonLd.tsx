@@ -128,6 +128,27 @@ export function ScholarlyArticleJsonLd({
   return <JsonLd data={data} />;
 }
 
+// FAQPage スキーマ（AI Overview 最適化）
+export function FAQJsonLd({
+  faqs,
+}: {
+  faqs: { question: string; answer: string }[];
+}) {
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+  return <JsonLd data={data} />;
+}
+
 // Person スキーマ（メンバー個別ページ用）
 export function PersonJsonLd({
   name,

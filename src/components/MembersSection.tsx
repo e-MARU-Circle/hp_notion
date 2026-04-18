@@ -79,7 +79,7 @@ const MembersSection = ({ pages }: MembersSectionProps) => {
                       src={imageUrl}
                       alt={name}
                       fill
-                      unoptimized
+                      sizes="(max-width: 640px) 50vw, 25vw"
                       className="object-cover"
                     />
                   )}

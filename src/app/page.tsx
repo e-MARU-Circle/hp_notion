@@ -1,9 +1,33 @@
 import Link from 'next/link';
 import HeroSection from '@/components/HeroSection';
 import MembersSection from '@/components/MembersSection';
+import { FAQJsonLd } from '@/components/JsonLd';
 import type { Page, MultiSelectTag } from '@/lib/types';
 import { tagColorMap, extractTitle, extractJpTitle } from '@/lib/types';
 import { getPublishedPages } from '@/lib/notion';
+
+const FAQ_DATA = [
+  {
+    question: 'ABOJCとは何ですか？',
+    answer: 'ABOJCは「American Board of Orthodontics Journal Club」の略称で、アメリカ矯正歯科認定医機構（ABO）が指定する文献を専門家が集い探求するジャーナルクラブです。科学的根拠に基づいた確かな知見を、専門家や一般の方々へ日本語で発信しています。',
+  },
+  {
+    question: 'American Board of Orthodontics（ABO）とは何ですか？',
+    answer: 'American Board of Orthodontics（ABO）は、アメリカの矯正歯科における最高峰の認定機構です。矯正歯科医の専門的能力を審査・認定し、矯正歯科学の水準を世界的に牽引しています。ABOが指定する文献リストは、矯正歯科の専門医認定試験の基盤となっています。',
+  },
+  {
+    question: 'ジャーナルクラブ（抄読会）とは何ですか？',
+    answer: 'ジャーナルクラブ（抄読会）は、医療や学術の専門家が定期的に集まり、最新の学術論文を批判的に読み解き、議論する場です。ABOJCでは月に2回程度開催し、矯正歯科に関する重要な文献を日本語で解説・発信しています。',
+  },
+  {
+    question: 'ABOJCの論文レビューは誰が書いていますか？',
+    answer: 'ABOJCの論文レビューは、日本各地で活躍する矯正歯科専門医が担当しています。各メンバーは矯正歯科の臨床経験を持つ歯科医師であり、専門的な視点から文献を批判的に評価し、日本語で解説しています。',
+  },
+  {
+    question: 'エビデンスベースド歯科医学（EBD）とは何ですか？',
+    answer: 'エビデンスベースド歯科医学（Evidence-Based Dentistry, EBD）は、最良の科学的根拠（エビデンス）に基づいて歯科治療の意思決定を行うアプローチです。ABOJCは、ABO指定文献の批判的吟味を通じて、日本の矯正歯科におけるEBDの普及に貢献しています。',
+  },
+] as const;
 
 // On-demand ISR (webhook) + 1時間フォールバック
 export const revalidate = 3600;
@@ -133,6 +157,26 @@ export default async function Home() {
             );
           }
         })}
+
+        <section className="py-16 border-t border-stone-200" id="faq">
+          <FAQJsonLd faqs={[...FAQ_DATA]} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="md:col-span-1">
+              <h2 className="text-3xl font-bold tracking-tight">FAQ</h2>
+              <p className="text-stone-600 mt-2">よくある質問</p>
+            </div>
+            <div className="md:col-span-2">
+              <dl className="space-y-6">
+                {FAQ_DATA.map((faq) => (
+                  <div key={faq.question}>
+                    <dt className="text-lg font-bold mb-2">{faq.question}</dt>
+                    <dd className="text-stone-600 leading-relaxed">{faq.answer}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </div>
+        </section>
 
         <section className="py-16 border-t border-stone-200" id="contact">
           <div>

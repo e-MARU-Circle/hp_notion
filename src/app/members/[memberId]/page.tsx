@@ -146,7 +146,7 @@ export default async function MemberPage({ params }: Props) {
               src={imageUrl}
               alt={name}
               fill
-              unoptimized
+              sizes="160px"
               className="object-cover"
             />
           )}
